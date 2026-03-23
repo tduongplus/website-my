@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>VIP Store Pro | Thanh Duong Dev - Tool Chuyên Nghiệp</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif}
+        body{background:linear-gradient(145deg,#f0f9ff,#e6f4fe);padding:20px;min-height:100vh}
+        .snowflake{position:fixed;top:-10px;color:#fff9;pointer-events:none;z-index:9999;animation:fall 5s linear forwards}
+        @keyframes fall{to{transform:translateY(100vh);opacity:0}}
+        .container{max-width:1200px;margin:0 auto}
+        .brand{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.5);backdrop-filter:blur(10px);padding:12px 24px;border-radius:50px;margin-bottom:30px;flex-wrap:wrap}
+        .logo h1{background:linear-gradient(135deg,#0b2b5c,#1e88e5);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:1.8rem}
+        .user-greet{background:rgba(30,136,229,0.15);padding:8px 18px;border-radius:40px;font-weight:500}
+        .tabs{display:flex;gap:10px;margin-bottom:30px;flex-wrap:wrap}
+        .tab-btn{background:rgba(255,255,255,0.6);border:none;padding:10px 24px;border-radius:50px;cursor:pointer;transition:.3s;font-weight:500}
+        .tab-btn.active{background:#1976d2;color:#fff;box-shadow:0 5px 15px rgba(25,118,210,0.3)}
+        .panel{display:none;animation:fadeIn 0.3s ease}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .panel.active-panel{display:block}
+        .glass-card{background:rgba(255,255,255,0.75);backdrop-filter:blur(16px);border-radius:32px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,0.05)}
+        .products-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:20px}
+        .product-item{background:#fff;border-radius:28px;padding:24px;transition:all 0.3s;cursor:pointer;box-shadow:0 5px 15px rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.03)}
+        .product-item:hover{transform:translateY(-8px);box-shadow:0 20px 35px -12px rgba(0,100,200,0.2);border-color:#1976d2}
+        .product-icon i{font-size:2.8rem;color:#1976d2;margin-bottom:15px;display:inline-block}
+        .product-title{font-size:1.5rem;font-weight:700;margin-bottom:8px}
+        .product-desc{color:#666;font-size:0.85rem;margin-bottom:12px}
+        .product-price{font-size:1.6rem;font-weight:800;color:#1976d2;margin:15px 0 10px}
+        .btn-buy,.btn-primary{background:#1976d2;border:none;padding:12px;border-radius:60px;color:#fff;width:100%;cursor:pointer;transition:all 0.2s;font-weight:600}
+        .btn-buy:hover,.btn-primary:hover{background:#0d47a1;transform:scale(0.98)}
+        .btn-secondary{background:#f0f4f8;border:1px solid #ddd;padding:10px 20px;border-radius:40px;cursor:pointer;font-weight:500}
+        input{width:100%;padding:14px 18px;border-radius:60px;border:1px solid #ddd;margin-bottom:15px;font-size:1rem}
+        input:focus{outline:none;border-color:#1976d2;box-shadow:0 0 0 3px rgba(25,118,210,0.1)}
+        .qr-container{background:#fff;padding:24px;border-radius:28px;text-align:center;margin:15px 0}
+        .qr-img{max-width:260px;width:100%;margin:15px auto;border-radius:20px;box-shadow:0 8px 20px rgba(0,0,0,0.1);display:block}
+        .order-item{background:#fff;border-radius:20px;padding:18px;margin-bottom:12px;border-left:5px solid #ff9800;transition:0.2s}
+        .order-item:hover{transform:translateX(5px)}
+        .status-pending{color:#ff9800;font-weight:600}
+        .status-completed{color:#4caf50;font-weight:600}
+        .toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);background:#1f2a3e;color:#fff;padding:12px 28px;border-radius:50px;z-index:10000;font-weight:500;animation:fadeOut 3s forwards}
+        @keyframes fadeOut{0%{opacity:1}80%{opacity:1}100%{opacity:0;visibility:hidden}}
+        footer{text-align:center;margin-top:60px;padding:20px;background:rgba(255,255,255,0.4);border-radius:50px}
+        footer a{color:#1976d2;text-decoration:none;margin:0 12px;font-weight:500}
+        .admin-badge{background:#ff9800;color:#fff;padding:2px 10px;border-radius:30px;font-size:11px;margin-left:8px}
+        .bank-info{background:#f8fafc;border-radius:24px;padding:18px;margin:20px 0 10px;text-align:left}
+        .copy-btn{background:#eef2ff;border:none;padding:5px 14px;border-radius:40px;cursor:pointer;font-size:12px;margin-left:10px}
+        .sub-product-list{display:flex;gap:15px;margin-top:15px;flex-wrap:wrap}
+        .sub-product-card{background:#f8f9fa;border-radius:20px;padding:15px;flex:1;min-width:200px;text-align:center;transition:0.2s;cursor:pointer;border:2px solid transparent}
+        .sub-product-card:hover{transform:scale(1.02);border-color:#1976d2;background:#fff}
+        .sub-price{font-size:1.3rem;font-weight:700;color:#1976d2;margin:10px 0}
+        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(5px);z-index:10001;justify-content:center;align-items:center}
+        .modal-content{background:#fff;border-radius:32px;padding:24px;max-width:500px;width:90%;animation:modalSlide 0.3s ease}
+        @keyframes modalSlide{from{transform:translateY(-50px);opacity:0}to{transform:translateY(0);opacity:1}}
+        .close-modal{float:right;font-size:28px;cursor:pointer;color:#999}
+        @media (max-width:640px){.brand{flex-direction:column;text-align:center;gap:12px}}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="brand">
+        <div class="logo"><h1>⚡ VIP STORE PRO <span style="font-size:14px; font-weight:400">Thanh Duong Dev</span></h1></div>
+        <div class="user-greet"><i class="fas fa-user-circle"></i> <span id="greeting">Chưa đăng nhập</span>
+        <button id="logoutBtn" style="display:none; background:none; border:none; margin-left:10px; cursor:pointer; font-size:1.1rem"><i class="fas fa-sign-out-alt"></i></button></div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="home">🏠 Cửa hàng</button>
+        <button class="tab-btn" data-tab="login">🔐 Đăng nhập</button>
+        <button class="tab-btn" data-tab="register">📝 Đăng ký</button>
+        <button class="tab-btn" data-tab="profile" id="profileTab" style="display:none">👤 Hồ sơ</button>
+        <button class="tab-btn" data-tab="admin" id="adminTab" style="display:none">👑 Admin</button>
+    </div>
+
+    <div id="homePanel" class="panel active-panel">
+        <div class="glass-card">
+            <h2 style="display:flex; align-items:center; gap:12px"><i class="fas fa-crown" style="color:#ff9800"></i> Sản phẩm VIP Chất Lượng Cao</h2>
+            <p style="margin-bottom:12px; color:#555">🔥 Tool Messenger & Email nằm trong mục VIP Auto Tool</p>
+            <div class="products-grid" id="productsGrid"></div>
+        </div>
+    </div>
+
+    <div id="loginPanel" class="panel"><div class="glass-card"><h2>🔐 Đăng nhập</h2><input type="text" id="loginUser" placeholder="Username"><input type="password" id="loginPass" placeholder="Password"><button class="btn-primary" onclick="handleLogin()">Đăng nhập</button><div id="loginError" style="color:#e74c3c; margin-top:12px"></div></div></div>
+    <div id="registerPanel" class="panel"><div class="glass-card"><h2>📝 Đăng ký</h2><input type="text" id="regUser" placeholder="Username"><input type="password" id="regPass" placeholder="Password"><input type="password" id="regConfirm" placeholder="Xác nhận"><input type="tel" id="regPhone" placeholder="Số điện thoại"><input type="text" id="regName" placeholder="Họ tên"><button class="btn-primary" onclick="handleRegister()">Đăng ký</button><div id="regError" style="color:#e74c3c; margin-top:12px"></div></div></div>
+    <div id="profilePanel" class="panel"><div class="glass-card" id="profileContent"></div></div>
+    <div id="adminPanel" class="panel"><div class="glass-card"><h2>👑 Quản lý đơn hàng</h2><div id="adminOrders"></div><button class="btn-primary" onclick="exportData()" style="margin-top:20px">📥 Xuất danh sách</button></div></div>
+    <div id="paymentPanel" class="panel"><div class="glass-card" id="paymentContent"></div></div>
+</div>
+
+<!-- Modal chọn tool con -->
+<div id="toolModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeToolModal()">&times;</span>
+        <h3 style="margin-bottom:20px"><i class="fas fa-cogs"></i> Chọn Tool VIP</h3>
+        <div id="subToolList"></div>
+    </div>
+</div>
+
+<footer>
+    <p>© 2026 Thanh Duong Dev | Hệ thống Tool VIP Chuyên Nghiệp</p>
+    <div><a href="https://youtube.com/@anhladuong.00" target="_blank"><i class="fab fa-youtube"></i> YouTube</a><a href="https://www.facebook.com/share/1Ai7vvVnty/" target="_blank"><i class="fab fa-facebook"></i> Facebook</a><a href="https://t.me/ctd275" target="_blank"><i class="fab fa-telegram"></i> Telegram</a></div>
+</footer>
+
+<script>
+    // ========== DỮ LIỆU ==========
+    let users = JSON.parse(localStorage.getItem('users') || '[]');
+    let orders = JSON.parse(localStorage.getItem('orders') || '[]');
+    let currentUser = localStorage.getItem('currentUser');
+    let isAdmin = currentUser === 'TD-27052009';
+    
+    const QR_IMAGE_URL = "https://raw.githubusercontent.com/tduongplus/website-my/main/zlp-1774237904878.jpg";
+    const BANK_INFO = { bank: "ZaloPay / Vietcombank", accountNo: "0355582522", accountName: "THANH DUONG DEV" };
+    
+    // === SẢN PHẨM CHÍNH (GIỮ NGUYÊN 6 SẢN PHẨM) ===
+    const mainProducts = [
+        { id: 1, name: "🤖 VIP Auto Tool", desc: "Tool tự động hóa cao cấp - Bao gồm Messenger & Email", price: 50000, icon: "fa-cogs", hasSub: true },
+        { id: 2, name: "🎮 Acc Liên Quân", desc: "Account rank cao, nhiều skin VIP", price: 100000, icon: "fa-gamepad", hasSub: false, link: "https://drive.google.com/uc?export=download&id=YOUR_ID" },
+        { id: 3, name: "⚔️ Acc Free Fire", desc: "Account max level, nhân vật hiếm", price: 150000, icon: "fa-dragon", hasSub: false, link: "https://drive.google.com/uc?export=download&id=YOUR_ID" },
+        { id: 4, name: "💾 File Apk Crack", desc: "Game mod full tính năng", price: 0, icon: "fa-file-archive", hasSub: false, link: "https://drive.google.com/uc?export=download&id=YOUR_ID" },
+        { id: 5, name: "🔧 Data Free Fire", desc: "Config OB44, OB45 cao cấp", price: 120000, icon: "fa-magic", hasSub: false, link: "https://drive.google.com/uc?export=download&id=YOUR_ID" },
+        { id: 6, name: "📀 Prompt AI", desc: "Prompt ChatGPT, Midjourney", price: 200000, icon: "fa-skull", hasSub: false, link: "https://drive.google.com/uc?export=download&id=YOUR_ID" }
+    ];
+    
+    // === TOOL CON (2 TOOL VIP) ===
+    const subTools = [
+        { id: 101, name: "📱 Tool Messenger VIP", desc: "Auto nhắn tin, quét thành viên, tăng tương tác", price: 50000, icon: "fa-comments", link: "https://drive.google.com/uc?export=download&id=1q6enKWsu9I_VxWi7s1knBbiAm2YY_v4t" },
+        { id: 102, name: "✉️ Tool Email Marketing", desc: "Gửi email hàng loạt, kiểm tra danh sách", price: 20000, icon: "fa-envelope", link: "https://drive.google.com/uc?export=download&id=1KZMG0BMRJMtbwR-4VMFBslZlIWQjyoy9" }
+    ];
+    
+    let selectedProduct = null;
+    let pendingSubSelection = false;
+    
+    function saveData() { localStorage.setItem('users', JSON.stringify(users)); localStorage.setItem('orders', JSON.stringify(orders)); }
+    function showToast(msg) { let t=document.createElement('div'); t.className='toast'; t.innerText=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
+    function copyText(text) { navigator.clipboard.writeText(text); showToast('📋 Đã copy: ' + text); }
+    
+    function updateUI() {
+        document.getElementById('greeting').innerHTML = currentUser ? `${currentUser} ${isAdmin ? '<span class="admin-badge">Admin</span>' : ''}` : 'Chưa đăng nhập';
+        document.getElementById('logoutBtn').style.display = currentUser ? 'inline-block' : 'none';
+        document.getElementById('profileTab').style.display = currentUser ? 'inline-block' : 'none';
+        document.getElementById('adminTab').style.display = isAdmin ? 'inline-block' : 'none';
+        renderProducts();
+        if(currentUser) loadProfile();
+        if(isAdmin) loadAdmin();
+    }
+    
+    function renderProducts() {
+        const grid = document.getElementById('productsGrid');
+        if(!grid) return;
+        grid.innerHTML = mainProducts.map(p => `
+            <div class="product-item">
+                <div class="product-icon"><i class="fas ${p.icon}"></i></div>
+                <div class="product-title">${p.name}</div>
+                <div class="product-desc">${p.desc}</div>
+                <div class="product-price">${p.price.toLocaleString()} ₫</div>
+                <button class="btn-buy" onclick="handleBuyMainProduct(${p.id})">Mua ngay 🔥</button>
+            </div>
+        `).join('');
+    }
+    
+    function handleBuyMainProduct(productId) {
+        if(!currentUser) { showToast('⚠️ Vui lòng đăng nhập trước khi mua'); switchTab('login'); return; }
+        const product = mainProducts.find(p=>p.id===productId);
+        if(product.hasSub) {
+            // Hiển thị modal chọn tool con
+            showSubToolModal();
+        } else {
+            selectedProduct = product;
+            startPaymentFlow(selectedProduct.name, selectedProduct.price, selectedProduct.link);
+        }
+    }
+    
+    function showSubToolModal() {
+        const modal = document.getElementById('toolModal');
+        const subList = document.getElementById('subToolList');
+        subList.innerHTML = subTools.map(tool => `
+            <div class="sub-product-card" onclick="selectSubTool(${tool.id})">
+                <i class="fas ${tool.icon}" style="font-size:2rem; color:#1976d2"></i>
+                <h4>${tool.name}</h4>
+                <p style="font-size:12px; color:#666">${tool.desc}</p>
+                <div class="sub-price">${tool.price.toLocaleString()} ₫</div>
+                <button class="btn-secondary" style="width:100%">Chọn mua</button>
+            </div>
+        `).join('');
+        modal.style.display = 'flex';
+    }
+    
+    function selectSubTool(toolId) {
+        const tool = subTools.find(t=>t.id===toolId);
+        if(tool) {
+            closeToolModal();
+            selectedProduct = tool;
+            startPaymentFlow(tool.name, tool.price, tool.link);
+        }
+    }
+    
+    function closeToolModal() {
+        document.getElementById('toolModal').style.display = 'none';
+    }
+    
+    function startPaymentFlow(productName, productPrice, productLink) {
+        const orderCode = 'TD' + Date.now() + Math.floor(Math.random()*1000);
+        
+        document.getElementById('paymentContent').innerHTML = `
+            <h3><i class="fas fa-credit-card"></i> Thanh toán đơn hàng</h3>
+            <div style="background:#fff; padding:20px; border-radius:24px; margin:20px 0; text-align:center; border:1px solid #eef">
+                <p><strong style="font-size:1.2rem">${productName}</strong></p>
+                <p>💰 Giá: <strong style="color:#1976d2; font-size:1.6rem">${productPrice.toLocaleString()} ₫</strong></p>
+                <p>📦 Mã đơn: <strong style="color:#ff9800; background:#fff3e0; padding:4px 12px; border-radius:40px">${orderCode}</strong>
+                    <button class="copy-btn" onclick="copyText('${orderCode}')"><i class="fas fa-copy"></i> Copy</button>
+                </p>
+            </div>
+            <div class="qr-container">
+                <h4><i class="fas fa-qrcode"></i> Quét mã QR để chuyển khoản</h4>
+                <img src="${QR_IMAGE_URL}" class="qr-img" alt="QR Thanh toán">
+                <div class="bank-info">
+                    <p><i class="fas fa-university"></i> <strong>${BANK_INFO.bank}</strong></p>
+                    <p>💳 STK: <strong>${BANK_INFO.accountNo}</strong> <button class="copy-btn" onclick="copyText('${BANK_INFO.accountNo}')"><i class="fas fa-copy"></i></button></p>
+                    <p>👤 Chủ TK: <strong>${BANK_INFO.accountName}</strong></p>
+                    <p>📝 Nội dung: <strong style="color:#d32f2f; font-size:1.1rem">${orderCode}</strong> <button class="copy-btn" onclick="copyText('${orderCode}')"><i class="fas fa-copy"></i></button></p>
+                </div>
+                <button class="btn-primary" onclick="confirmPayment('${orderCode}', '${productName}', ${productPrice}, '${productLink}')" style="margin-top:15px">
+                    ✅ Đã chuyển khoản, gửi đơn
+                </button>
+                <p style="font-size:12px; color:#666; margin-top:15px"><i class="fas fa-clock"></i> Sau khi chuyển khoản, bấm nút trên. Admin sẽ duyệt và gửi link tải.</p>
+            </div>
+        `;
+        switchTab('payment');
+    }
+    
+    function confirmPayment(orderCode, productName, productPrice, productLink) {
+        orders.push({
+            orderCode: orderCode,
+            product: productName,
+            price: productPrice,
+            user: currentUser,
+            date: new Date().toISOString(),
+            status: 'pending',
+            downloadLink: productLink
+        });
+        saveData();
+        showToast(`✅ Đã ghi nhận đơn hàng ${orderCode}\nVui lòng chờ admin duyệt (thường 5-15 phút)`);
+        switchTab('profile');
+        loadProfile();
+        if(isAdmin) loadAdmin();
+        selectedProduct = null;
+    }
+    
+    function loadProfile() {
+        const userOrders = orders.filter(o=>o.user===currentUser).reverse();
+        document.getElementById('profileContent').innerHTML = `
+            <h3>📦 Lịch sử mua hàng</h3>
+            ${userOrders.length ? userOrders.map(o=>`
+                <div class="order-item">
+                    <strong>🧾 ${o.orderCode}</strong> - ${o.product}<br>
+                    💰 ${o.price.toLocaleString()} ₫ | 📅 ${new Date(o.date).toLocaleString()}<br>
+                    Trạng thái: <span class="${o.status==='pending'?'status-pending':'status-completed'}">
+                        ${o.status==='pending' ? '⏳ Chờ xử lý' : '✅ Đã duyệt - Sẵn sàng tải'}
+                    </span>
+                    ${o.status==='completed' ? `<br><a href="${o.downloadLink}" class="btn-secondary" style="display:inline-block; margin-top:10px" target="_blank"><i class="fas fa-download"></i> Tải ngay</a>` : ''}
+                </div>
+            `).join('') : '<div style="text-align:center; padding:40px">📭 Bạn chưa có đơn hàng nào</div>'}
+        `;
+    }
+    
+    function loadAdmin() {
+        const pendingOrders = orders.filter(o=>o.status==='pending');
+        const completedOrders = orders.filter(o=>o.status==='completed');
+        document.getElementById('adminOrders').innerHTML = `
+            <div style="display:flex; gap:15px; margin-bottom:25px; flex-wrap:wrap">
+                <div style="background:#fff3e0; padding:15px; border-radius:20px; flex:1; text-align:center"><h3>⏳ ${pendingOrders.length}</h3><p>Chờ duyệt</p></div>
+                <div style="background:#e8f5e9; padding:15px; border-radius:20px; flex:1; text-align:center"><h3>✅ ${completedOrders.length}</h3><p>Đã xử lý</p></div>
+                <div style="background:#e3f2fd; padding:15px; border-radius:20px; flex:1; text-align:center"><h3>💰 ${orders.reduce((s,o)=>s+o.price,0).toLocaleString()}₫</h3><p>Doanh thu</p></div>
+            </div>
+            <h3>📋 Quản lý đơn</h3>
+            ${orders.length ? orders.map(o=>`
+                <div class="order-item">
+                    <strong>${o.orderCode}</strong> - ${o.product}<br>
+                    👤 ${o.user} | 💰 ${o.price.toLocaleString()} ₫<br>
+                    📅 ${new Date(o.date).toLocaleString()}<br>
+                    Nội dung CK: <strong style="color:#d32f2f">${o.orderCode}</strong><br>
+                    Trạng thái: ${o.status==='pending' ? 
+                        `<span class="status-pending">⏳ Chờ</span> 
+                         <button class="btn-secondary" style="margin-left:10px" onclick="approveOrder('${o.orderCode}')">✅ Duyệt & Gửi link</button>` : 
+                        `<span class="status-completed">✅ Đã duyệt</span>`}
+                </div>
+            `).join('') : '<p>Chưa có đơn hàng</p>'}
+        `;
+    }
+    
+    function approveOrder(code) {
+        const order = orders.find(o=>o.orderCode===code);
+        if(order) { order.status = 'completed'; saveData(); loadAdmin(); loadProfile(); showToast(`🎉 Đã duyệt đơn ${code} - Khách có thể tải tool ngay`); }
+    }
+    
+    function exportData() {
+        let data = "=== DANH SÁCH ĐƠN HÀNG VIP ===\n";
+        data += `Ngày xuất: ${new Date().toLocaleString()}\n\n`;
+        orders.forEach((o,i)=>{ data += `${i+1}. ${o.orderCode} | ${o.user} | ${o.product} | ${o.price.toLocaleString()} VND | ${o.status}\n`; });
+        const blob = new Blob([data], {type:'text/plain'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `donhang_vip_${Date.now()}.txt`;
+        a.click();
+        showToast('📁 Đã xuất danh sách đơn hàng');
+    }
+    
+    function handleLogin() {
+        const user = document.getElementById('loginUser').value.trim();
+        const pass = document.getElementById('loginPass').value;
+        if(user === 'TD-27052009' && pass === 'TD-27052009') {
+            currentUser = user; isAdmin = true;
+            localStorage.setItem('currentUser', user);
+            updateUI(); showToast('👑 Xin chào Admin!'); switchTab('home');
+        } else {
+            const found = users.find(u=>u.username===user && u.password===pass);
+            if(found) { currentUser = user; isAdmin = false; localStorage.setItem('currentUser', user); updateUI(); showToast(`🎉 Chào ${user}, chúc bạn mua sắm vui vẻ!`); switchTab('home'); }
+            else document.getElementById('loginError').innerText = 'Sai tài khoản hoặc mật khẩu';
+        }
+    }
+    
+    function handleRegister() {
+        const user = document.getElementById('regUser').value.trim();
+        const pass = document.getElementById('regPass').value;
+        const confirm = document.getElementById('regConfirm').value;
+        const phone = document.getElementById('regPhone').value.trim();
+        const name = document.getElementById('regName').value.trim();
+        if(!user || !pass) { document.getElementById('regError').innerText = 'Vui lòng điền đầy đủ'; return; }
+        if(pass !== confirm) { document.getElementById('regError').innerText = 'Mật khẩu xác nhận không khớp'; return; }
+        if(users.find(u=>u.username===user)) { document.getElementById('regError').innerText = 'Username đã tồn tại'; return; }
+        users.push({username:user, password:pass, phone, fullname:name});
+        saveData();
+        showToast('✅ Đăng ký thành công! Hãy đăng nhập');
+        switchTab('login');
+    }
+    
+    document.getElementById('logoutBtn').onclick = () => { currentUser=null; isAdmin=false; localStorage.removeItem('currentUser'); updateUI(); switchTab('home'); showToast('🚪 Đã đăng xuất'); };
+    
+    function switchTab(tab) {
+        document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active-panel'));
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.getElementById(`${tab}Panel`).classList.add('active-panel');
+        const btn = document.querySelector(`[data-tab="${tab}"]`);
+        if(btn) btn.classList.add('active');
+        if(tab==='profile') loadProfile();
+        if(tab==='admin') loadAdmin();
+    }
+    document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
+    
+    // Đóng modal khi click ra ngoài
+    window.onclick = function(event) { if(event.target == document.getElementById('toolModal')) closeToolModal(); };
+    
+    setInterval(()=>{let f=document.createElement('div'); f.className='snowflake'; f.innerHTML='❄️'; f.style.left=Math.random()*window.innerWidth+'px'; f.style.fontSize=10+Math.random()*14+'px'; document.body.appendChild(f); setTimeout(()=>f.remove(),5000);},700);
+    
+    updateUI();
+</script>
+</body>
+</html>
