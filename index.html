@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DG STORE</title>
+<style>
+/* ===== Biến giao diện: sáng / tối ===== */
+:root[data-theme=dark]{--bg:#000;--bg2:#0a0a0a;--bg3:#161616;--fg:#fff;--fg2:#c4c4c4;--fg3:#808080;--border:#2a2a2a;--gold:#d4af37;--gold2:#f4d97a;--success:#2ecc71;--danger:#ff5a4d;--warning:#f1c40f;--shadow:0 12px 40px rgba(0,0,0,.7);--glass:rgba(18,18,18,.62)}
+:root[data-theme=light]{--bg:#fff;--bg2:#f6f6f6;--bg3:#ececec;--fg:#000;--fg2:#404040;--fg3:#808080;--border:#dcdcdc;--gold:#9c7a14;--gold2:#d4af37;--success:#1e9e55;--danger:#d63a2e;--warning:#b88a00;--shadow:0 12px 40px rgba(0,0,0,.14);--glass:rgba(255,255,255,.7)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--fg);transition:background .5s,color .5s;min-height:100vh;overflow-x:hidden}
+h1,h2,h3,.brand,.big{font-family:"Playfair Display",Georgia,serif;font-weight:600;letter-spacing:.01em}
+button,input{font:inherit;color:inherit}
+.gold{color:var(--gold)}.mut{color:var(--fg2)}
+canvas#fx{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+#glow{position:fixed;left:-150px;top:-150px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,.16),transparent 65%);pointer-events:none;z-index:2;will-change:transform}
+/* ===== Header ===== */
+header{position:fixed;top:0;left:0;right:0;height:64px;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--border);transition:background .5s}
+.hr{display:flex;gap:8px;align-items:center}
+.brand{font-size:21px;letter-spacing:.14em}.brand i{color:var(--gold);font-style:normal}
+.icon-btn,.chip{background:none;border:1px solid transparent;border-radius:10px;cursor:pointer;min-width:40px;height:40px;display:flex;align-items:center;justify-content:center;transition:background .25s,border-color .25s}
+.icon-btn:hover,.chip:hover{background:var(--bg3);border-color:var(--border)}
+.chip{padding:0 14px;font-size:13px;gap:8px;border-color:var(--border)}
+#burger{flex-direction:column;gap:5px}#burger span{display:block;width:22px;height:2px;background:var(--fg);border-radius:2px}
+/* ===== Drawer ===== */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:60;opacity:0;pointer-events:none;transition:opacity .4s}
+.overlay.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:320px;max-width:88vw;background:var(--bg2);border-right:1px solid var(--border);z-index:70;transform:translateX(-100%);transition:transform .4s cubic-bezier(.25,.8,.25,1);padding:24px 18px;display:flex;flex-direction:column;gap:18px;will-change:transform}
+.drawer.open{transform:translateX(0)}
+.ubox{display:flex;gap:14px;align-items:center;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.av{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#000;display:flex;align-items:center;justify-content:center;font:700 19px Georgia,serif;flex:none}
+.role{font-size:11px;border:1px solid var(--gold);color:var(--gold);border-radius:99px;padding:1px 10px}
+.nav-i{display:block;width:100%;text-align:left;background:none;border:0;border-radius:10px;padding:12px 14px;cursor:pointer;font-size:16px;color:var(--fg2);transition:background .25s,color .25s}
+.nav-i:hover,.nav-i.on{background:var(--bg3);color:var(--gold)}
+.drawer .tools{margin-top:auto;display:flex;gap:8px}
+/* ===== Views ===== */
+main{position:relative;z-index:3;max-width:1100px;margin:0 auto;padding:96px 20px 90px}
+.view{display:none}.view.active{display:block;animation:vin .6s cubic-bezier(.2,.7,.2,1)}
+@keyframes vin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.hero{padding:7vh 0 5vh;max-width:760px}
+.hero h1{font-size:clamp(36px,7vw,72px);line-height:1.08;margin-bottom:18px}
+.hero p{font-size:18px;color:var(--fg2);max-width:560px;margin-bottom:30px}
+.hero .gl{display:inline-block;width:70px;height:2px;background:linear-gradient(90deg,var(--gold),transparent);margin-bottom:22px}
+.btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn{border:1px solid var(--border);background:none;border-radius:12px;padding:12px 26px;cursor:pointer;font-weight:600;transition:box-shadow .3s,border-color .3s,opacity .3s;will-change:transform}
+.btn-sm{padding:7px 14px;font-size:13px;border-radius:9px}
+a.btn{display:inline-block;text-decoration:none}
+.btn-primary{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#000;border-color:transparent}
+.btn-primary:hover{box-shadow:0 0 28px rgba(212,175,55,.5)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-success{background:var(--success);color:#fff;border-color:transparent}.btn-danger{background:var(--danger);color:#fff;border-color:transparent}
+.btn:disabled{opacity:.5}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px;margin-top:22px}
+.card{background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:22px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:transform .35s,border-color .35s,box-shadow .35s,background .5s}
+.hov{will-change:transform}.hov:hover{transform:translateY(-4px);border-color:var(--gold);box-shadow:var(--shadow)}
+.card h3{font-size:20px;margin-bottom:8px}
+.sec{margin-top:60px}.sec h2{font-size:30px}.sec>p{color:var(--fg2);margin-top:4px}
+.num{font:600 34px Georgia,serif;color:var(--gold)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.tags span{font-size:12px;border:1px solid var(--border);border-radius:99px;padding:1px 10px;color:var(--fg2)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px}
+/* ===== Wallet / bảng ===== */
+.big{font-size:44px;color:var(--gold)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin:18px 0}
+label{display:block;font-size:13px;color:var(--fg2);margin:12px 0 4px}
+input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;outline:none;transition:border-color .25s}
+input:focus{border-color:var(--gold)}
+.qrprev{width:220px;height:220px;max-width:100%;margin:12px 0;border:1px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;background:#fff;font-size:40px;overflow:hidden}
+.qrprev img{max-width:100%;max-height:100%;object-fit:contain}
+.tw{overflow-x:auto;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--fg3);text-align:left;padding:10px;border-bottom:1px solid var(--border)}
+td{padding:10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:var(--bg3)}
+.badge{font-size:12px;border-radius:99px;padding:2px 11px;border:1px solid}
+.badge.pending,.badge.active{color:var(--warning);border-color:var(--warning)}.badge.active{color:var(--success);border-color:var(--success)}
+.badge.approved{color:var(--success);border-color:var(--success)}.badge.rejected,.badge.banned{color:var(--danger);border-color:var(--danger)}
+.qth{width:38px;height:38px;object-fit:contain;background:#fff;border-radius:6px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:8px}
+.ap{margin-top:34px}.ap h3{font-size:22px}
+/* ===== Modal auth ===== */
+.mo{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .35s}
+.mo.open{opacity:1;pointer-events:auto}
+.modal{width:100%;max-width:400px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:28px;box-shadow:var(--shadow);transform:scale(.92) translateY(20px);opacity:0;transition:transform .4s cubic-bezier(.25,.8,.25,1),opacity .4s;will-change:transform}
+.mo.open .modal{transform:none;opacity:1}
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:8px}
+.tabs button{flex:1;background:none;border:0;border-bottom:2px solid transparent;padding:10px;cursor:pointer;color:var(--fg3);font-weight:600}
+.tabs button.on{color:var(--gold);border-color:var(--gold)}
+.modal .btn{width:100%;margin-top:20px}
+/* ===== Toast, nhạc ===== */
+#toasts{position:fixed;right:18px;bottom:18px;z-index:100;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:10px;padding:12px 18px;box-shadow:var(--shadow);max-width:320px;transform:translateX(120%);opacity:0;transition:transform .4s cubic-bezier(.25,.8,.25,1),opacity .4s}
+.toast.show{transform:none;opacity:1}.toast.error{border-left-color:var(--danger)}.toast.success{border-left-color:var(--success)}
+#musicBtn{position:fixed;left:auto;right:18px;bottom:78px;z-index:55;width:48px;height:48px;border-radius:50%;background:var(--glass);border:1px solid var(--border);cursor:pointer;font-size:20px;backdrop-filter:blur(10px);transition:border-color .3s,opacity .3s;opacity:.7}
+#musicBtn.on{border-color:var(--gold);opacity:1;box-shadow:0 0 20px rgba(212,175,55,.4)}
+@media(max-width:640px){.lang-btn{display:none}main{padding:84px 14px 90px}.brand{font-size:17px}.hero p{font-size:16px}.big{font-size:36px}.chip span.nm{display:none}.sec h2{font-size:25px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01s!important}}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas><div id="glow"></div>
+
+<header>
+  <button class="icon-btn" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  <div class="brand">DG<i>·</i>STORE</div>
+  <div class="hr">
+    <button class="icon-btn lang-btn" id="langBtn" aria-label="Language"></button>
+    <button class="icon-btn" id="themeBtn" aria-label="Theme"></button>
+    <button class="chip" id="userChip"></button>
+  </div>
+</header>
+
+<div class="overlay" id="ov"></div>
+<aside class="drawer" id="drawer">
+  <div class="ubox" id="drawerUser"></div>
+  <nav id="nav"></nav>
+  <div class="tools"><button class="icon-btn" id="langBtn2"></button><button class="icon-btn" id="themeBtn2"></button></div>
+</aside>
+
+<main>
+  <!-- ===== HOME ===== -->
+  <section class="view active" id="v-home">
+    <div class="hero">
+      <span class="gl"></span>
+      <h1 data-i18n="heroT"></h1>
+      <p data-i18n="heroS"></p>
+      <div class="btns">
+        <button class="btn btn-primary mag" data-go="market" data-i18n="browse"></button>
+        <button class="btn btn-ghost mag" data-go="wallet" data-i18n="openWallet"></button>
+      </div>
+    </div>
+    <div class="grid" id="homeStats"></div>
+    <div class="sec"><h2 data-i18n="featT"></h2><p data-i18n="featS"></p>
+      <div class="grid">
+        <div class="card hov"><h3 data-i18n="f1t"></h3><p class="mut" data-i18n="f1d"></p></div>
+        <div class="card hov"><h3 data-i18n="f2t"></h3><p class="mut" data-i18n="f2d"></p></div>
+        <div class="card hov"><h3 data-i18n="f3t"></h3><p class="mut" data-i18n="f3d"></p></div>
+      </div>
+    </div>
+  </section>
+  <!-- ===== MARKET ===== -->
+  <section class="view" id="v-market">
+    <div class="sec" style="margin-top:20px"><h2 data-i18n="marketT"></h2><p data-i18n="marketS"></p></div>
+    <div class="grid" id="grid"></div>
+  </section>
+  <!-- ===== WALLET ===== -->
+  <section class="view" id="v-wallet"><div id="wbody"></div></section>
+  <section class="view" id="v-orders"><div id="obody"></div></section>
+  <!-- ===== ADMIN ===== -->
+  <section class="view" id="v-admin"><div id="abody"></div></section>
+</main>
+
+<!-- ===== Modal đăng nhập / đăng ký ===== -->
+<div class="mo" id="authOv"><div class="modal" id="authBox"></div></div>
+<div id="toasts"></div>
+
+<!-- Đặt file nhạc cạnh index.html (tên: bg-music.mp3). Nhạc KHÔNG tự phát. -->
+<audio id="bgm" src="bg-music.mp3" loop preload="none"></audio>
+<button id="musicBtn" aria-label="Music">🎵</button>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* ===== Cấu hình Supabase (anon key là khoá công khai, để trong web được) ===== */
+const SUPABASE_URL='https://uzwyoaofsdlhraawmbjc.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6d3lvYW9mc2RsaHJhYXdtYmpjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5MTUwNDcsImV4cCI6MjEwODQ5MTA0N30.e_YbD-r5DWs1IvzztinwzG72UFS_YMR3FrYQpokVBMg';
+/* Đăng nhập bằng tên đăng nhập: app ghép thành email ảo. Nếu đăng ký báo "email không hợp lệ", đổi tên miền này. */
+const EMAIL_DOMAIN='gmail.com';
+const sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
+const state={user:null,lang:'vi',theme:'dark',authTab:'login',qr:null,code:null,view:'home',listings:[],tx:[],adm:null,dl:{},busy:false};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* QR nhận tiền cố định của admin (ảnh đã cắt chỉ còn mã QR) */
+const ADMIN_QR='data:image/png;base64,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';
+/* Chỉ lưu ngôn ngữ + giao diện trên máy; dữ liệu thật nằm ở Supabase */
+function saveSession(){try{localStorage.setItem('DG_pref',JSON.stringify({lang:state.lang,theme:state.theme}))}catch(e){}}
+function loadPref(){try{const p=JSON.parse(localStorage.getItem('DG_pref')||'{}');if(p.lang)state.lang=p.lang;if(p.theme)state.theme=p.theme}catch(e){}}
+
+/* ===== Đa ngôn ngữ ===== */
+const I18N={
+vi:{home:'Trang chủ',market:'Chợ mã nguồn',wallet:'Ví (Nạp / Rút)',admin:'Quản trị',logout:'Đăng xuất',login:'Đăng nhập',register:'Đăng ký',
+heroT:'Mã nguồn đẳng cấp, trải nghiệm xứng tầm.',heroS:'Nơi lập trình viên mua và bán những dự án được chăm chút đến từng chi tiết.',browse:'Khám phá mã nguồn',openWallet:'Mở ví',
+sCodes:'Mã nguồn',sUsers:'Thành viên',sOrders:'Giao dịch',featT:'Vì sao chọn DG STORE',featS:'Ba lý do để bạn yên tâm giao dịch.',
+f1t:'An toàn',f1d:'Mọi giao dịch nạp rút đều được quản trị viên duyệt thủ công.',f2t:'Nhận ngay',f2d:'Mua xong, mã nguồn và số dư được cập nhật tức thì.',f3t:'Chọn lọc',f3d:'Mỗi sản phẩm đều được tuyển chọn kỹ về chất lượng.',
+marketT:'Chợ mã nguồn',marketS:'Chọn dự án phù hợp và mua bằng số dư ví của bạn.',buy:'Mua ngay',
+balance:'Số dư',dep:'Nạp tiền',wd:'Rút tiền',upQR:'Tải lên mã QR nhận tiền (nếu có)',amount:'Số tiền (VNĐ)',note:'Nội dung chuyển khoản',bank:'Số tài khoản ngân hàng',submit:'Gửi yêu cầu',
+history:'Lịch sử giao dịch',cType:'Loại',cAmount:'Số tiền',cNote:'Ghi chú',cStatus:'Trạng thái',cTime:'Thời gian',pending:'Chờ duyệt',approved:'Đã duyệt',rejected:'Từ chối',
+tdeposit:'💰 Nạp',twithdraw:'💸 Rút',tbuy:'🛒 Mua',aUsers:'Tổng người dùng',aActive:'Đang hoạt động',aBanned:'Bị khoá',aPend:'Chờ duyệt',
+aPendT:'Yêu cầu chờ duyệt',aUsersT:'Quản lý người dùng',aLogsT:'Nhật ký IP (30 gần nhất)',cUser:'Tài khoản',cRole:'Vai trò',cEvent:'Sự kiện',cAct:'Thao tác',cBal:'Số dư',ban:'Khoá',unban:'Mở khoá',none:'Chưa có dữ liệu',
+orders:'Lịch sử mua hàng',oCode:'Mã đơn',oProd:'Sản phẩm',oBuyer:'Người mua',dl:'Tải về',copy:'Sao chép',copied:'Đã sao chép nội dung.',scanQR:'Quét mã QR, chuyển đúng số tiền và nội dung bên dưới, rồi gửi yêu cầu.',
+eMail:'Email ảo bị từ chối, hãy đổi EMAIL_DOMAIN trong code.',ePass:'Mật khẩu tối thiểu 6 ký tự.',eUser:'Tên đăng nhập 3–20 ký tự: a-z, 0-9, _',eNet:'Lỗi kết nối, vui lòng thử lại.',eConfirm:'Chưa vào được: hãy tắt "Confirm email" trong Supabase.',
+user:'Tên đăng nhập',pass:'Mật khẩu',conf:'Nhập lại mật khẩu',
+eFill:'Vui lòng điền đầy đủ thông tin.',eMatch:'Mật khẩu nhập lại không khớp.',eExists:'Tên đăng nhập đã tồn tại.',eBad:'Sai tên đăng nhập hoặc mật khẩu.',eBanned:'Tài khoản đã bị khoá.',eBal:'Số dư không đủ, hãy nạp thêm.',eMin:'Số tiền tối thiểu 10.000 ₫.',eQR:'Hãy tải lên mã QR trước.',eMusic:'Không tìm thấy bg-music.mp3.',
+welcome:'Chào mừng đến DG STORE',okLogin:'Đăng nhập thành công.',okReg:'Tạo tài khoản thành công.',okReq:'Đã gửi yêu cầu, chờ quản trị viên duyệt.',okBuy:'Mua thành công: ',okApp:'Đã duyệt yêu cầu.',okRej:'Đã từ chối yêu cầu.',okBan:'Đã cập nhật tài khoản.',webIP:'Giới hạn phía trình duyệt'},
+en:{home:'Home',market:'Marketplace',wallet:'Wallet (Deposit / Withdraw)',admin:'Admin Panel',logout:'Logout',login:'Login',register:'Register',
+heroT:'Exceptional code, an experience to match.',heroS:'Where developers buy and sell projects crafted down to the last detail.',browse:'Browse Codes',openWallet:'Open Wallet',
+sCodes:'Codes',sUsers:'Members',sOrders:'Transactions',featT:'Why DG STORE',featS:'Three reasons to trade with confidence.',
+f1t:'Secure',f1d:'Every deposit and withdrawal is reviewed by an administrator.',f2t:'Instant',f2d:'After you buy, your code and balance update immediately.',f3t:'Curated',f3d:'Each product is carefully selected for quality.',
+marketT:'Code Marketplace',marketS:'Pick a project and pay with your wallet balance.',buy:'Buy now',
+balance:'Balance',dep:'Deposit',wd:'Withdraw',upQR:'Upload your receiving QR (optional)',amount:'Amount (VND)',note:'Transfer note',bank:'Bank account number',submit:'Submit request',
+history:'Transaction history',cType:'Type',cAmount:'Amount',cNote:'Note',cStatus:'Status',cTime:'Time',pending:'Pending',approved:'Approved',rejected:'Rejected',
+tdeposit:'💰 Deposit',twithdraw:'💸 Withdraw',tbuy:'🛒 Purchase',aUsers:'Total users',aActive:'Active',aBanned:'Banned',aPend:'Pending',
+aPendT:'Pending requests',aUsersT:'User management',aLogsT:'IP logs (latest 30)',cUser:'User',cRole:'Role',cEvent:'Event',cAct:'Actions',cBal:'Balance',ban:'Ban',unban:'Unban',none:'No data yet',
+orders:'Purchase history',oCode:'Order ID',oProd:'Product',oBuyer:'Buyer',dl:'Download',copy:'Copy',copied:'Note copied.',scanQR:'Scan the QR, transfer the exact amount and note below, then submit.',
+eMail:'Virtual email rejected, change EMAIL_DOMAIN in the code.',ePass:'Password must be at least 6 characters.',eUser:'Username 3–20 chars: a-z, 0-9, _',eNet:'Connection error, please try again.',eConfirm:'Cannot sign in: turn off "Confirm email" in Supabase.',
+user:'Username',pass:'Password',conf:'Confirm password',
+eFill:'Please fill in all fields.',eMatch:'Passwords do not match.',eExists:'Username already taken.',eBad:'Wrong username or password.',eBanned:'This account has been banned.',eBal:'Insufficient balance, please deposit.',eMin:'Minimum amount is 10,000 ₫.',eQR:'Upload a QR code first.',eMusic:'bg-music.mp3 not found.',
+welcome:'Welcome to DG STORE',okLogin:'Logged in.',okReg:'Account created.',okReq:'Request sent, awaiting admin approval.',okBuy:'Purchased: ',okApp:'Request approved.',okRej:'Request rejected.',okBan:'Account updated.',webIP:'Client-side limitation'}};
+const t=k=>(I18N[state.lang][k]??k);
+function applyI18n(){document.documentElement.lang=state.lang;document.querySelectorAll('[data-i18n]').forEach(e=>e.textContent=t(e.dataset.i18n))}
+
+/* ===== Tiện ích ===== */
+const fmt=n=>Number(n).toLocaleString('vi-VN')+' ₫';
+const ftime=ts=>new Date(ts).toLocaleString(state.lang==='vi'?'vi-VN':'en-GB');
+function toast(msg,type){
+  const e=document.createElement('div');e.className='toast '+(type||'');e.textContent=msg;$('#toasts').appendChild(e);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>e.classList.add('show')));
+  setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),450)},3000);
+}
+async function getUserIP(){
+  try{const c=new AbortController();setTimeout(()=>c.abort(),3500);
+    const r=await fetch('https://api.ipify.org?format=json',{signal:c.signal});return (await r.json()).ip}
+  catch(e){return 'unknown'}
+}
+/* webIP: trình duyệt không biết IP máy chủ, chỉ ghi tên miền kèm ghi chú */
+const getWebIP=()=>(location.hostname||'localhost')+' ('+t('webIP')+')';
+async function logEvent(ev){
+  const ip=await getUserIP();
+  await sb.rpc('log_event',{p_event:ev,p_user_ip:ip,p_web_ip:getWebIP(),p_ua:navigator.userAgent});
+}
+/* Đổi lỗi từ server thành thông báo dễ hiểu */
+function errMsg(e){const m=((e&&e.message)||'').toLowerCase();
+  if(m.includes('insufficient'))return t('eBal');if(m.includes('banned'))return t('eBanned');if(m.includes('min_amount'))return t('eMin');
+  if(m.includes('already')||m.includes('database error')||m.includes('duplicate'))return t('eExists');
+  if(m.includes('invalid login'))return t('eBad');if(m.includes('invalid')&&m.includes('email'))return t('eMail');if(m.includes('password'))return t('ePass');
+  return t('eNet')+(m?' ('+m.slice(0,60)+')':'')}
+
+/* ===== Xác thực (Supabase Auth) ===== */
+/* Email ảo dài hơn 6 ký tự (một số bộ kiểm tra từ chối phần tên quá ngắn kiểu admin@gmail.com) */
+const toEmail=u=>u+'.dg@'+EMAIL_DOMAIN,oldEmail=u=>u+'@'+EMAIL_DOMAIN;
+function openAuth(tab){state.authTab=tab||'login';renderAuthForm();$('#authOv').classList.add('open')}
+function closeAuth(){$('#authOv').classList.remove('open')}
+function switchAuthTab(x){state.authTab=x;renderAuthForm()}
+function renderAuthForm(){
+  const r=state.authTab==='register';
+  $('#authBox').innerHTML=`<div class="tabs"><button class="${r?'':'on'}" onclick="switchAuthTab('login')">${t('login')}</button><button class="${r?'on':''}" onclick="switchAuthTab('register')">${t('register')}</button></div>
+  <label>${t('user')}</label><input id="aU" autocomplete="username">
+  <label>${t('pass')}</label><input id="aP" type="password" autocomplete="${r?'new-password':'current-password'}">
+  ${r?`<label>${t('conf')}</label><input id="aC" type="password" autocomplete="new-password">`:''}
+  <button class="btn btn-primary mag" id="aGo">${r?t('register'):t('login')}</button>`;
+  $('#aGo').onclick=r?doRegister:doLogin;
+  $('#authBox').onkeydown=e=>{if(e.key==='Enter')$('#aGo').click()};
+  setTimeout(()=>$('#aU').focus(),50);
+}
+
+/* Tải hồ sơ + đơn của tôi từ server. Trả false nếu chưa đăng nhập hoặc bị khoá */
+async function loadMine(){
+  if(!sb)return false;
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){state.user=null;state.tx=[];return false}
+  const {data:p}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();
+  if(!p){state.user=null;return false}
+  if(p.banned){await sb.auth.signOut();state.user=null;state.tx=[];toast(t('eBanned'),'error');return false}
+  state.user=p;
+  const r=await sb.from('tx').select('*').eq('user_id',p.id).order('created_at',{ascending:false});
+  state.tx=r.data||[];return true;
+}
+async function doLogin(){
+  const n=$('#aU').value.trim().toLowerCase(),p=$('#aP').value;
+  if(!n||!p)return toast(t('eFill'),'error');
+  let {error}=await sb.auth.signInWithPassword({email:toEmail(n),password:p});
+  if(error&&/invalid login/i.test(error.message)){const r=await sb.auth.signInWithPassword({email:oldEmail(n),password:p});if(!r.error)error=null}
+  if(error)return toast(errMsg(error),'error');
+  if(!await loadMine())return;
+  closeAuth();renderAll();toast(t('okLogin'),'success');logEvent('login');
+}
+async function doRegister(){
+  const n=$('#aU').value.trim().toLowerCase(),p=$('#aP').value,c=$('#aC').value;
+  if(!n||!p||!c)return toast(t('eFill'),'error');
+  if(!/^[a-z0-9_]{3,20}$/.test(n))return toast(t('eUser'),'error');
+  if(p.length<6)return toast(t('ePass'),'error');
+  if(p!==c)return toast(t('eMatch'),'error');
+  const {data,error}=await sb.auth.signUp({email:toEmail(n),password:p,options:{data:{username:n}}});
+  if(error)return toast(errMsg(error),'error');
+  if(!data.session)return toast(t('eConfirm'),'error');
+  await loadMine();closeAuth();renderAll();toast(t('okReg'),'success');logEvent('register');
+}
+async function logout(){await sb.auth.signOut();state.user=null;state.tx=[];state.adm=null;state.dl={};toggleDrawer(false);switchView('home')}
+
+/* ===== Điều hướng / hiển thị ===== */
+async function switchView(v){
+  if((v==='wallet'||v==='orders'||v==='admin')&&!state.user){toggleDrawer(false);return openAuth('login')}
+  if(v==='admin'&&state.user.role!=='admin')return;
+  state.view=v;document.querySelectorAll('.view').forEach(e=>e.classList.toggle('active',e.id==='v-'+v));
+  toggleDrawer(false);window.scrollTo({top:0});renderAll();await refreshView();
+}
+/* Mỗi lần mở màn hình: lấy dữ liệu mới nhất từ server rồi vẽ lại */
+async function refreshView(){
+  if(!sb||!state.user)return;
+  if(!await loadMine()){switchView('home');return}
+  if(state.view==='admin')await loadAdmin();
+  if(state.view==='orders')await loadDownloads();
+  renderAll();
+}
+function toggleDrawer(f){
+  const o=typeof f==='boolean'?f:!$('#drawer').classList.contains('open');
+  $('#drawer').classList.toggle('open',o);$('#ov').classList.toggle('open',o);
+}
+function renderAll(){renderHeader();renderDrawerUser();renderHome();renderMarket();
+  if(state.view==='wallet')renderWallet();if(state.view==='orders')renderOrders();if(state.view==='admin')renderAdmin();applyI18n()}
+function renderHeader(){
+  const u=state.user,flag=state.lang==='vi'?'🇻🇳':'🇬🇧',ic=state.theme==='dark'?'🌙':'☀️';
+  ['#langBtn','#langBtn2'].forEach(s=>$(s).textContent=flag);['#themeBtn','#themeBtn2'].forEach(s=>$(s).textContent=ic);
+  $('#userChip').innerHTML=u?`<b class="gold">${esc(u.username[0].toUpperCase())}</b><span class="nm">${esc(u.username)}</span>`:t('login');
+  $('#userChip').onclick=()=>u?toggleDrawer(true):openAuth('login');
+}
+function renderDrawerUser(){
+  const u=state.user;
+  $('#drawerUser').innerHTML=u?`<div class="av">${esc(u.username[0].toUpperCase())}</div><div><b>${esc(u.username)}</b><br><span class="role">${u.role}</span></div>`
+    :`<div class="av">?</div><div><button class="btn btn-primary btn-sm" onclick="toggleDrawer(false);openAuth('login')">${t('login')}</button></div>`;
+  const items=[['home','home'],['market','market'],['wallet','wallet'],['orders','orders']];
+  if(u&&u.role==='admin')items.push(['admin','admin']);
+  $('#nav').innerHTML=items.map(i=>`<button class="nav-i ${state.view===i[0]?'on':''}" data-go="${i[0]}">${t(i[1])}</button>`).join('')+(u?`<button class="nav-i" onclick="logout()">${t('logout')}</button>`:'');
+}
+function renderHome(){
+  const u=state.user,c=[[state.listings.length,'sCodes']];
+  if(u)c.push([fmt(u.balance),'balance'],[state.tx.filter(x=>x.type==='buy').length,'orders']);
+  $('#homeStats').innerHTML=c.map(a=>`<div class="card hov"><div class="num">${a[0]}</div><span class="mut">${t(a[1])}</span></div>`).join('');
+}
+function renderMarket(){
+  $('#grid').innerHTML=state.listings.map(l=>`<div class="card hov"><h3>${esc(l.title)}</h3><p class="mut">${esc(l['desc_'+state.lang]||'')}</p>
+  <div class="tags">${(l.tags||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div>
+  <div class="row"><b class="gold">${fmt(l.price)}</b><button class="btn btn-primary btn-sm mag" onclick="buyListing(${l.id})">${t('buy')}</button></div></div>`).join('');
+}
+/* Mua hàng: trừ tiền + tạo đơn xảy ra trên server (hàm buy_listing) */
+async function buyListing(id){
+  if(!state.user)return openAuth('login');
+  if(state.busy)return;state.busy=true;
+  const {data,error}=await sb.rpc('buy_listing',{p_listing:id});state.busy=false;
+  if(error){toast(errMsg(error),'error');if((error.message||'').includes('insufficient'))switchView('wallet');return}
+  toast(t('okBuy')+data.note+' · '+data.code,'success');switchView('orders');
+}
+
+/* ===== Ví ===== */
+const noteFor=()=>{if(!state.code)state.code=String(1000+Math.floor(Math.random()*9000));return 'NAP '+state.user.username.toUpperCase()+' '+state.code};
+function renderWallet(){
+  const u=state.user;if(!u)return;
+  $('#wbody').innerHTML=`<div class="card" style="margin-top:20px"><span class="mut">${t('balance')}</span><div class="big">${fmt(u.balance)}</div></div>
+  <div class="two">
+   <div class="card"><h3>${t('dep')}</h3><p class="mut">${t('scanQR')}</p>
+    <div class="qrprev"><img src="${ADMIN_QR}" alt="QR" style="image-rendering:pixelated"></div>
+    <label>${t('amount')}</label><input id="depAmt" type="number" min="10000" step="1000">
+    <label>${t('note')}</label><div class="row" style="margin:0"><input id="depNote" value="${esc(noteFor())}" readonly><button class="btn btn-ghost btn-sm" onclick="copyNote()">${t('copy')}</button></div>
+    <button class="btn btn-primary mag" onclick="submitDeposit()">${t('submit')}</button></div>
+   <div class="card"><h3>${t('wd')}</h3><label>${t('upQR')}</label><input type="file" accept="image/*" onchange="handleQRUpload(this)">
+    <div class="qrprev" id="qrPrev">${state.qr?`<img src="${state.qr}" alt="QR">`:'🔳'}</div>
+    <label>${t('amount')}</label><input id="wdAmt" type="number" min="10000" step="1000">
+    <label>${t('bank')}</label><input id="wdBank">
+    <button class="btn btn-primary mag" onclick="submitWithdraw()">${t('submit')}</button></div></div>
+  <div class="card"><h3>${t('history')}</h3><div class="tw"><table><tr><th>${t('cType')}</th><th>${t('cAmount')}</th><th>${t('cNote')}</th><th>${t('cStatus')}</th><th>${t('cTime')}</th></tr>
+  ${state.tx.length?state.tx.map(x=>`<tr><td>${t('t'+x.type)}</td><td>${fmt(x.amount)}</td><td>${esc(x.type==='withdraw'?(x.note||''):(x.note||''))}</td><td><span class="badge ${x.status}">${t(x.status)}</span></td><td>${ftime(x.created_at)}</td></tr>`).join(''):`<tr><td colspan="5" class="mut">${t('none')}</td></tr>`}</table></div></div>`;
+}
+function handleQRUpload(inp){
+  const f=inp.files[0];if(!f)return;
+  const fr=new FileReader();
+  fr.onload=()=>{const im=new Image();im.onload=()=>{state.qr=cropQRImage(im);$('#qrPrev').innerHTML=`<img src="${state.qr}" alt="QR">`};im.src=fr.result};
+  fr.readAsDataURL(f);
+}
+/* Tự động cắt QR: quét điểm ảnh, tìm khung chứa nội dung không-trắng, cắt + đệm 4px */
+function cropQRImage(img){
+  const s=Math.min(1,900/Math.max(img.width,img.height)),w=Math.round(img.width*s),h=Math.round(img.height*s);
+  const c=document.createElement('canvas');c.width=w;c.height=h;
+  const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);
+  const d=x.getImageData(0,0,w,h).data;let x0=w,y0=h,x1=-1,y1=-1;
+  for(let y=0;y<h;y++)for(let i=0;i<w;i++){const p=(y*w+i)*4;
+    if(d[p]<235||d[p+1]<235||d[p+2]<235){if(i<x0)x0=i;if(i>x1)x1=i;if(y<y0)y0=y;if(y>y1)y1=y}}
+  if(x1<0)return c.toDataURL('image/png');
+  x0=Math.max(0,x0-4);y0=Math.max(0,y0-4);x1=Math.min(w-1,x1+4);y1=Math.min(h-1,y1+4);
+  const ow=x1-x0+1,oh=y1-y0+1,o=document.createElement('canvas');o.width=ow;o.height=oh;
+  o.getContext('2d').drawImage(c,x0,y0,ow,oh,0,0,ow,oh);const r=o.toDataURL('image/png');return r.length>700000?o.toDataURL('image/jpeg',.8):r;
+}
+function copyNote(){const i=$('#depNote');
+  (navigator.clipboard?navigator.clipboard.writeText(i.value):Promise.reject()).catch(()=>{i.select();document.execCommand&&document.execCommand('copy')}).then(()=>toast(t('copied'),'success'))}
+async function submitDeposit(){
+  const a=Math.floor(+$('#depAmt').value);
+  if(!(a>=10000))return toast(t('eMin'),'error');
+  const {error}=await sb.rpc('create_deposit',{p_amount:a,p_note:noteFor()});
+  if(error)return toast(errMsg(error),'error');
+  state.code=null;toast(t('okReq'),'success');await refreshView();
+}
+async function submitWithdraw(){
+  const a=Math.floor(+$('#wdAmt').value),b=$('#wdBank').value.trim();
+  if(!b&&!state.qr)return toast(t('eFill'),'error');
+  if(!(a>=10000))return toast(t('eMin'),'error');
+  const {error}=await sb.rpc('create_withdraw',{p_amount:a,p_note:b,p_qr:state.qr});
+  if(error)return toast(errMsg(error),'error');
+  state.qr=null;toast(t('okReq'),'success');await refreshView();
+}
+
+/* ===== Lịch sử mua hàng: link tải chỉ server trả cho người đã mua ===== */
+async function loadDownloads(){
+  await Promise.all(state.tx.filter(x=>x.type==='buy'&&!state.dl[x.id]).map(async x=>{
+    const {data}=await sb.rpc('get_download',{p_tx:x.id});if(data)state.dl[x.id]=data}));
+}
+function renderOrders(){
+  const u=state.user;if(!u)return;
+  const my=state.tx.filter(x=>x.type==='buy');
+  $('#obody').innerHTML=`<div class="sec" style="margin-top:20px"><h2>${t('orders')}</h2></div><div class="card" style="margin-top:18px"><div class="tw"><table><tr><th>${t('oCode')}</th><th>${t('oProd')}</th><th>${t('oBuyer')}</th><th>${t('cAmount')}</th><th>${t('cTime')}</th><th></th></tr>
+  ${my.length?my.map(x=>{const l=state.dl[x.id];return `<tr><td><b class="gold">${esc(x.code||'')}</b></td><td>${esc(x.note||'')}</td><td>${esc(u.username)}</td><td>${fmt(x.amount)}</td><td>${ftime(x.created_at)}</td><td>${/^https?:\/\//i.test(l||'')?`<a class="btn btn-primary btn-sm" href="${esc(l)}" target="_blank" rel="noopener">${t('dl')}</a>`:'…'}</td></tr>`}).join(''):`<tr><td colspan="6" class="mut">${t('none')}</td></tr>`}</table></div></div>`;
+}
+
+/* ===== Quản trị (dữ liệu của mọi người dùng, chỉ admin đọc được) ===== */
+async function loadAdmin(){
+  const [a,b,c]=await Promise.all([
+    sb.from('profiles').select('*').order('created_at'),
+    sb.from('tx').select('*').in('type',['deposit','withdraw']).eq('status','pending').order('created_at',{ascending:false}),
+    sb.from('logs').select('*').order('created_at',{ascending:false}).limit(30)]);
+  state.adm={users:a.data||[],pend:b.data||[],logs:c.data||[]};
+}
+function renderAdmin(){
+  if(!state.user||state.user.role!=='admin')return;
+  const A=state.adm||{users:[],pend:[],logs:[]},nm=id=>{const u=A.users.find(x=>x.id===id);return u?u.username:'?'};
+  const stats=[[A.users.length,'aUsers'],[A.users.filter(u=>!u.banned).length,'aActive'],[A.users.filter(u=>u.banned).length,'aBanned'],[A.pend.length,'aPend']]
+    .map(a=>`<div class="card"><div class="num">${a[0]}</div><span class="mut">${t(a[1])}</span></div>`).join('');
+  $('#abody').innerHTML=`<div class="stats" style="margin-top:20px">${stats}</div>
+  <div class="ap"><h3>${t('aPendT')}</h3><div class="card"><div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('cType')}</th><th>${t('cAmount')}</th><th>${t('cNote')}</th><th>${t('cTime')}</th><th>${t('cAct')}</th></tr>
+  ${A.pend.length?A.pend.map(x=>`<tr><td>${esc(nm(x.user_id))}</td><td>${t('t'+x.type)}</td><td>${fmt(x.amount)}</td><td>${x.qr?`<img class="qth" src="${esc(x.qr)}" alt="QR"> `:''}${esc(x.note||'')}</td><td>${ftime(x.created_at)}</td>
+  <td><button class="btn btn-success btn-sm" onclick="decideTx(${x.id},true)">✓</button> <button class="btn btn-danger btn-sm" onclick="decideTx(${x.id},false)">✕</button></td></tr>`).join(''):`<tr><td colspan="6" class="mut">${t('none')}</td></tr>`}</table></div></div></div>
+  <div class="ap"><h3>${t('aUsersT')}</h3><div class="card"><div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('cRole')}</th><th>${t('cBal')}</th><th>${t('cStatus')}</th><th>${t('cAct')}</th></tr>
+  ${A.users.map(u=>`<tr><td>${esc(u.username)}</td><td>${u.role}</td><td>${fmt(u.balance)}</td><td><span class="badge ${u.banned?'banned':'active'}">${u.banned?t('aBanned'):t('aActive')}</span></td>
+  <td>${u.id===state.user.id?'—':`<button class="btn btn-ghost btn-sm" onclick="toggleBan('${u.id}',${!u.banned})">${u.banned?'✓ '+t('unban'):'⊘ '+t('ban')}</button>`}</td></tr>`).join('')}</table></div></div></div>
+  <div class="ap"><h3>${t('aLogsT')}</h3><div class="card"><div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('cEvent')}</th><th>User IP</th><th>Web IP</th><th>User agent</th><th>${t('cTime')}</th></tr>
+  ${A.logs.length?A.logs.map(l=>`<tr><td>${esc(l.username||'')}</td><td>${esc(l.event||'')}</td><td>${esc(l.user_ip||'')}</td><td>${esc(l.web_ip||'')}</td><td title="${esc(l.ua||'')}">${esc((l.ua||'').slice(0,34))}…</td><td>${ftime(l.created_at)}</td></tr>`).join(''):`<tr><td colspan="6" class="mut">${t('none')}</td></tr>`}</table></div></div></div>`;
+}
+async function decideTx(id,ok){
+  const {error}=await sb.rpc('admin_decide',{p_tx:id,p_approve:ok});
+  if(error)return toast(errMsg(error),'error');
+  toast(t(ok?'okApp':'okRej'),'success');await refreshView();
+}
+async function toggleBan(id,ban){
+  const {error}=await sb.rpc('admin_set_ban',{p_user:id,p_ban:ban});
+  if(error)return toast(errMsg(error),'error');
+  toast(t('okBan'),'success');await refreshView();
+}
+
+/* ===== Giao diện: theme, ngôn ngữ ===== */
+function applyTheme(){document.documentElement.dataset.theme=state.theme}
+function toggleTheme(){state.theme=state.theme==='dark'?'light':'dark';applyTheme();saveSession();renderHeader()}
+function toggleLang(){state.lang=state.lang==='vi'?'en':'vi';saveSession();renderAll()}
+
+/* ===== Hiệu ứng theo mùa (canvas) ===== */
+const cv=$('#fx'),ctx=cv.getContext('2d');let P=[],season='leaf',running=true;
+/* T1-4 hoa đào · T5-7 phượng · T8-10 lá thu · T11-12 tuyết (đã gộp phần trùng tháng) */
+function getSeason(){const m=new Date().getMonth();return m<=3?'blossom':m<=6?'flower':m<=9?'leaf':'snow'}
+function resizeCanvas(){cv.width=innerWidth;cv.height=innerHeight}
+function createParticle(init){
+  const sn=season==='snow';
+  return{x:Math.random()*cv.width,y:init?Math.random()*cv.height:-20,size:sn?2+Math.random()*3.5:7+Math.random()*9,
+    speed:.4+Math.random()*1.1,drift:(Math.random()-.5)*.7,rot:Math.random()*6.28,vr:(Math.random()-.5)*.03,ph:Math.random()*6.28,
+    col:season==='leaf'?['#c0561b','#e08a1e','#8b4513','#b8860b'][Math.floor(Math.random()*4)]:season==='blossom'?['#ffb7c5','#ff8fab','#ffd1dc'][Math.floor(Math.random()*3)]:'#d8261c'};
+}
+function initParticles(){season=getSeason();P=[];const n=innerWidth<700?30:60;for(let i=0;i<n;i++)P.push(createParticle(true))}
+function drawParticle(p){
+  ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.globalAlpha=.85;ctx.beginPath();
+  if(season==='snow'){ctx.fillStyle=state.theme==='dark'?'#fff':'#8fb4d9';ctx.arc(0,0,p.size,0,6.283)}
+  else if(season==='leaf'){ctx.fillStyle=p.col;ctx.ellipse(0,0,p.size,p.size*.45,0,0,6.283)}
+  else if(season==='blossom'){ctx.fillStyle=p.col;for(let i=0;i<5;i++){ctx.rotate(1.2566);ctx.ellipse(p.size*.5,0,p.size*.5,p.size*.3,0,0,6.283)}}
+  else{ctx.fillStyle=p.col;for(let i=0;i<3;i++){ctx.rotate(2.0944);ctx.ellipse(p.size*.45,0,p.size*.55,p.size*.28,0,0,6.283)}}
+  ctx.fill();ctx.restore();
+}
+function animateFX(){
+  if(!running)return;ctx.clearRect(0,0,cv.width,cv.height);
+  for(const p of P){p.y+=p.speed;p.ph+=.02;p.x+=p.drift+Math.sin(p.ph)*.4;p.rot+=p.vr;
+    if(p.y>cv.height+20||p.x<-30||p.x>cv.width+30){Object.assign(p,createParticle(false))}drawParticle(p)}
+  requestAnimationFrame(animateFX);
+}
+document.addEventListener('visibilitychange',()=>{running=!document.hidden;if(running)animateFX()});
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{resizeCanvas();initParticles()},150)},{passive:true});
+
+/* ===== Micro-interaction: nút từ tính + ánh sáng theo con trỏ ===== */
+let gx=-300,gy=-300,tx=-300,ty=-300;
+addEventListener('pointermove',e=>{tx=e.clientX-150;ty=e.clientY-150;
+  const m=e.target.closest&&e.target.closest('.mag');
+  if(m){const r=m.getBoundingClientRect();m.style.transform=`translate(${(e.clientX-r.left-r.width/2)*.18}px,${(e.clientY-r.top-r.height/2)*.28}px)`}},{passive:true});
+document.addEventListener('pointerout',e=>{const m=e.target.closest&&e.target.closest('.mag');if(m)m.style.transform=''},{passive:true});
+(function glowLoop(){gx+=(tx-gx)*.15;gy+=(ty-gy)*.15;$('#glow').style.transform=`translate(${gx}px,${gy}px)`;requestAnimationFrame(glowLoop)})();
+
+/* ===== Nhạc nền (người dùng bấm mới phát) ===== */
+const bgm=$('#bgm'),mb=$('#musicBtn'),GEST=['pointerdown','keydown','touchstart'];
+function dropGesture(){GEST.forEach(g=>removeEventListener(g,onGesture,true))}
+function startMusic(){bgm.volume=.5;return bgm.play().then(()=>{mb.classList.add('on');dropGesture()}).catch(()=>{})}
+function onGesture(e){if(e.target.closest&&e.target.closest('#musicBtn'))return;startMusic()}
+GEST.forEach(g=>addEventListener(g,onGesture,{capture:true,passive:true}));
+mb.onclick=()=>{dropGesture();
+  if(bgm.paused)bgm.play().then(()=>mb.classList.add('on')).catch(()=>toast(t('eMusic'),'error'));
+  else{bgm.pause();mb.classList.remove('on')}};
+
+/* ===== Khởi tạo ===== */
+async function init(){
+  loadPref();applyTheme();resizeCanvas();initParticles();animateFX();
+  $('#burger').onclick=()=>toggleDrawer();$('#ov').onclick=()=>toggleDrawer(false);
+  ['#themeBtn','#themeBtn2'].forEach(s=>$(s).onclick=toggleTheme);['#langBtn','#langBtn2'].forEach(s=>$(s).onclick=toggleLang);
+  $('#authOv').onclick=e=>{if(e.target.id==='authOv')closeAuth()};
+  document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)switchView(g.dataset.go)});
+  renderAll();toast(t('welcome'));startMusic();
+  if(!sb)return toast(t('eNet'),'error');
+  const l=await sb.from('listings').select('*').order('id');state.listings=l.data||[];
+  await loadMine();renderAll();
+}
+init();
+</script>
+</body>
+</html>
