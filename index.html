@@ -164,7 +164,7 @@ tr:hover td{background:var(--bg3)}
 const SUPABASE_URL='https://uzwyoaofsdlhraawmbjc.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6d3lvYW9mc2RsaHJhYXdtYmpjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5MTUwNDcsImV4cCI6MjEwODQ5MTA0N30.e_YbD-r5DWs1IvzztinwzG72UFS_YMR3FrYQpokVBMg';
 /* Đăng nhập bằng tên đăng nhập: app ghép thành email ảo. Nếu đăng ký báo "email không hợp lệ", đổi tên miền này. */
-const EMAIL_DOMAIN='outlook.com';
+const EMAIL_DOMAIN='gmail.com';
 const sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
 const state={user:null,lang:'vi',theme:'dark',authTab:'login',qr:null,code:null,view:'home',listings:[],tx:[],adm:null,dl:{},busy:false};
 const $=s=>document.querySelector(s);
@@ -187,7 +187,7 @@ history:'Lịch sử giao dịch',cType:'Loại',cAmount:'Số tiền',cNote:'Gh
 tdeposit:'💰 Nạp',twithdraw:'💸 Rút',tbuy:'🛒 Mua',aUsers:'Tổng người dùng',aActive:'Đang hoạt động',aBanned:'Bị khoá',aPend:'Chờ duyệt',
 aPendT:'Yêu cầu chờ duyệt',aUsersT:'Quản lý người dùng',aLogsT:'Nhật ký IP (30 gần nhất)',cUser:'Tài khoản',cRole:'Vai trò',cEvent:'Sự kiện',cAct:'Thao tác',cBal:'Số dư',ban:'Khoá',unban:'Mở khoá',none:'Chưa có dữ liệu',
 orders:'Lịch sử mua hàng',oCode:'Mã đơn',oProd:'Sản phẩm',oBuyer:'Người mua',dl:'Tải về',copy:'Sao chép',copied:'Đã sao chép nội dung.',scanQR:'Quét mã QR, chuyển đúng số tiền và nội dung bên dưới, rồi gửi yêu cầu.',
-eMail:'Email ảo bị từ chối, hãy đổi EMAIL_DOMAIN trong code.',ePass:'Mật khẩu tối thiểu 6 ký tự.',eUser:'Tên đăng nhập 3–20 ký tự: a-z, 0-9, _',eNet:'Lỗi kết nối, vui lòng thử lại.',eConfirm:'Chưa vào được: hãy tắt "Confirm email" trong Supabase.',
+eRate:'Supabase đang chặn gửi email (rate limit). Hãy tắt Confirm email rồi chờ khoảng 1 giờ.',eMail:'Email ảo bị từ chối, hãy đổi EMAIL_DOMAIN trong code.',ePass:'Mật khẩu tối thiểu 6 ký tự.',eUser:'Tên đăng nhập 3–20 ký tự: a-z, 0-9, _',eNet:'Lỗi kết nối, vui lòng thử lại.',eConfirm:'Chưa vào được: hãy tắt "Confirm email" trong Supabase.',
 user:'Tên đăng nhập',pass:'Mật khẩu',conf:'Nhập lại mật khẩu',
 eFill:'Vui lòng điền đầy đủ thông tin.',eMatch:'Mật khẩu nhập lại không khớp.',eExists:'Tên đăng nhập đã tồn tại.',eBad:'Sai tên đăng nhập hoặc mật khẩu.',eBanned:'Tài khoản đã bị khoá.',eBal:'Số dư không đủ, hãy nạp thêm.',eMin:'Số tiền tối thiểu 10.000 ₫.',eQR:'Hãy tải lên mã QR trước.',eMusic:'Không tìm thấy bg-music.mp3.',
 welcome:'Chào mừng đến DG STORE',okLogin:'Đăng nhập thành công.',okReg:'Tạo tài khoản thành công.',okReq:'Đã gửi yêu cầu, chờ quản trị viên duyệt.',okBuy:'Mua thành công: ',okApp:'Đã duyệt yêu cầu.',okRej:'Đã từ chối yêu cầu.',okBan:'Đã cập nhật tài khoản.',webIP:'Giới hạn phía trình duyệt'},
@@ -201,7 +201,7 @@ history:'Transaction history',cType:'Type',cAmount:'Amount',cNote:'Note',cStatus
 tdeposit:'💰 Deposit',twithdraw:'💸 Withdraw',tbuy:'🛒 Purchase',aUsers:'Total users',aActive:'Active',aBanned:'Banned',aPend:'Pending',
 aPendT:'Pending requests',aUsersT:'User management',aLogsT:'IP logs (latest 30)',cUser:'User',cRole:'Role',cEvent:'Event',cAct:'Actions',cBal:'Balance',ban:'Ban',unban:'Unban',none:'No data yet',
 orders:'Purchase history',oCode:'Order ID',oProd:'Product',oBuyer:'Buyer',dl:'Download',copy:'Copy',copied:'Note copied.',scanQR:'Scan the QR, transfer the exact amount and note below, then submit.',
-eMail:'Virtual email rejected, change EMAIL_DOMAIN in the code.',ePass:'Password must be at least 6 characters.',eUser:'Username 3–20 chars: a-z, 0-9, _',eNet:'Connection error, please try again.',eConfirm:'Cannot sign in: turn off "Confirm email" in Supabase.',
+eRate:'Supabase email rate limit hit. Turn off Confirm email and wait about 1 hour.',eMail:'Virtual email rejected, change EMAIL_DOMAIN in the code.',ePass:'Password must be at least 6 characters.',eUser:'Username 3–20 chars: a-z, 0-9, _',eNet:'Connection error, please try again.',eConfirm:'Cannot sign in: turn off "Confirm email" in Supabase.',
 user:'Username',pass:'Password',conf:'Confirm password',
 eFill:'Please fill in all fields.',eMatch:'Passwords do not match.',eExists:'Username already taken.',eBad:'Wrong username or password.',eBanned:'This account has been banned.',eBal:'Insufficient balance, please deposit.',eMin:'Minimum amount is 10,000 ₫.',eQR:'Upload a QR code first.',eMusic:'bg-music.mp3 not found.',
 welcome:'Welcome to DG STORE',okLogin:'Logged in.',okReg:'Account created.',okReq:'Request sent, awaiting admin approval.',okBuy:'Purchased: ',okApp:'Request approved.',okRej:'Request rejected.',okBan:'Account updated.',webIP:'Client-side limitation'}};
@@ -231,7 +231,7 @@ async function logEvent(ev){
 function errMsg(e){const m=((e&&e.message)||'').toLowerCase();
   if(m.includes('insufficient'))return t('eBal');if(m.includes('banned'))return t('eBanned');if(m.includes('min_amount'))return t('eMin');
   if(m.includes('already')||m.includes('database error')||m.includes('duplicate'))return t('eExists');
-  if(m.includes('invalid login'))return t('eBad');if(m.includes('invalid')&&m.includes('email'))return t('eMail');if(m.includes('password'))return t('ePass');
+  if(m.includes('rate limit'))return t('eRate');if(m.includes('not confirmed'))return t('eConfirm');if(m.includes('invalid login'))return t('eBad');if(m.includes('invalid')&&m.includes('email'))return t('eMail');if(m.includes('password'))return t('ePass');
   return t('eNet')+(m?' ('+m.slice(0,60)+')':'')}
 
 /* ===== Xác thực (Supabase Auth) ===== */
