@@ -164,7 +164,7 @@ tr:hover td{background:var(--bg3)}
 const SUPABASE_URL='https://uzwyoaofsdlhraawmbjc.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6d3lvYW9mc2RsaHJhYXdtYmpjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5MTUwNDcsImV4cCI6MjEwODQ5MTA0N30.e_YbD-r5DWs1IvzztinwzG72UFS_YMR3FrYQpokVBMg';
 /* Đăng nhập bằng tên đăng nhập: app ghép thành email ảo. Nếu đăng ký báo "email không hợp lệ", đổi tên miền này. */
-const EMAIL_DOMAIN='gmail.com';
+const EMAIL_DOMAIN='outlook.com';
 const sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
 const state={user:null,lang:'vi',theme:'dark',authTab:'login',qr:null,code:null,view:'home',listings:[],tx:[],adm:null,dl:{},busy:false};
 const $=s=>document.querySelector(s);
