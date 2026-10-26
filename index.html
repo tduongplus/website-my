@@ -105,6 +105,15 @@ tr:hover td{background:var(--bg3)}
 #preload .pbar{width:180px;max-width:55vw;height:2px;background:var(--border);border-radius:99px;overflow:hidden}
 #preload .pbar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .3s ease;will-change:width}
 #preload .ppct{font-family:"Playfair Display",Georgia,serif;font-size:14px;color:var(--gold)}
+select{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;outline:none;color:inherit;font:inherit}
+.srch{margin-bottom:8px}
+.atabs{display:flex;gap:8px;overflow-x:auto;margin:22px 0 4px;padding-bottom:4px;scrollbar-width:none}
+.atabs::-webkit-scrollbar{display:none}
+.atab{flex:none;background:none;border:1px solid var(--border);border-radius:99px;padding:8px 16px;cursor:pointer;color:var(--fg2);font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;white-space:nowrap;transition:border-color .25s,color .25s,background .25s}
+.atab:hover{border-color:var(--gold);color:var(--gold)}
+.atab.on{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#000;border-color:transparent}
+.atab .cnt{background:var(--danger);color:#fff;border-radius:99px;font-size:11px;padding:0 7px;line-height:18px}
+.atab.on .cnt{background:#000;color:var(--gold2)}
 </style>
 </head>
 <body>
@@ -141,7 +150,7 @@ tr:hover td{background:var(--bg3)}
       </div>
     </div>
     <div class="grid" id="homeStats"></div>
-    <div class="sec" id="topBuyersSec" style="display:none"><h2>${t('topBuyersT')}</h2><p>${t('topBuyersS')}</p><div class="grid" id="topBuyers"></div></div>
+    <div class="sec" id="topBuyersSec" style="display:none"><h2 data-i18n="topBuyersT"></h2><p data-i18n="topBuyersS"></p><div class="grid" id="topBuyers"></div></div>
     <div class="sec"><h2 data-i18n="featT"></h2><p data-i18n="featS"></p>
       <div class="grid">
         <div class="card hov"><h3 data-i18n="f1t"></h3><p class="mut" data-i18n="f1d"></p></div>
@@ -185,7 +194,7 @@ const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 /* Đăng nhập bằng tên đăng nhập: app ghép thành email ảo. Nếu đăng ký báo "email không hợp lệ", đổi tên miền này. */
 const EMAIL_DOMAIN='gmail.com';
 const sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
-const state={user:null,lang:'vi',theme:'dark',authTab:'login',qr:null,code:null,view:'home',listings:[],tx:[],myOrders:[],adm:null,dl:{},busy:false,top:{week:[],month:[]},pendingRef:''};
+const state={user:null,lang:'vi',theme:'dark',authTab:'login',qr:null,code:null,view:'home',listings:[],tx:[],myOrders:[],adm:null,dl:{},busy:false,top:{week:[],month:[]},pendingRef:'',adminTab:'pending'};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /* QR nhận tiền cố định của admin (ảnh đã cắt chỉ còn mã QR) */
@@ -205,7 +214,7 @@ balance:'Số dư',dep:'Nạp tiền',wd:'Rút tiền',upQR:'Tải lên mã QR n
 history:'Lịch sử giao dịch',cType:'Loại',cAmount:'Số tiền',cNote:'Ghi chú',cStatus:'Trạng thái',cTime:'Thời gian',pending:'Chờ duyệt',approved:'Đã duyệt',rejected:'Từ chối',
 tdeposit:'💰 Nạp',twithdraw:'💸 Rút',tbuy:'🛒 Mua',aUsers:'Tổng người dùng',aActive:'Đang hoạt động',aBanned:'Bị khoá',aPend:'Chờ duyệt',
 aPendT:'Yêu cầu chờ duyệt',aUsersT:'Quản lý người dùng',aLogsT:'Nhật ký IP (30 gần nhất)',cUser:'Tài khoản',cRole:'Vai trò',cEvent:'Sự kiện',cAct:'Thao tác',cBal:'Số dư',ban:'Khoá',unban:'Mở khoá',none:'Chưa có dữ liệu',
-orders:'Lịch sử mua hàng',refCode:'Mã giới thiệu (nếu có)',myRef:'Mã giới thiệu của bạn',refShare:'Chia sẻ mã này: bạn được 10.000đ khi bạn bè mua đơn đầu tiên, họ được giảm 5.000đ.',
+orders:'Lịch sử mua hàng',tabPending:'Chờ duyệt',tabTop:'Top người mua',tabOrders:'Đặt làm riêng',tabUsers:'Người dùng',tabLogs:'Nhật ký IP',search:'Tìm kiếm...',payPeriod:'Kỳ thưởng',ePaid:'Kỳ này đã ghi nhận trả thưởng cho người này rồi.',eNoUser:'Không tìm thấy người dùng này.',refCode:'Mã giới thiệu (nếu có)',myRef:'Mã giới thiệu của bạn',refShare:'Chia sẻ mã này: bạn được 10.000đ khi bạn bè mua đơn đầu tiên, họ được giảm 5.000đ.',
 topBuyersT:'🏆 Top người mua',topBuyersS:'Xếp hạng theo tổng tiền mua thật trong tuần/tháng này — không tính tiền nạp.',tabWeek:'Tuần này',tabMonth:'Tháng này',rank:'Hạng',totalBuy:'Tổng đã mua',
 aRewardsT:'Thưởng top người mua',suggest:'Gợi ý',payUser:'Tên đăng nhập người thắng',payAmt:'Số tiền đã chuyển (đ)',payNote:'Ghi chú (STK, nội dung CK...)',payGo:'Ghi nhận đã trả',okPay:'Đã lưu lịch sử trả thưởng.',
 customT:'Đặt làm theo yêu cầu',customS:'Mô tả sản phẩm bạn muốn, để lại email hoặc Zalo để admin liên hệ trao đổi, cải tiến.',customReqL:'Bạn muốn làm sản phẩm gì?',customContactL:'Email hoặc số Zalo để liên hệ',customGo:'Gửi yêu cầu',okOrder:'Đã gửi yêu cầu, admin sẽ liên hệ qua thông tin bạn để lại.',
@@ -223,7 +232,7 @@ balance:'Balance',dep:'Deposit',wd:'Withdraw',upQR:'Upload your receiving QR (op
 history:'Transaction history',cType:'Type',cAmount:'Amount',cNote:'Note',cStatus:'Status',cTime:'Time',pending:'Pending',approved:'Approved',rejected:'Rejected',
 tdeposit:'💰 Deposit',twithdraw:'💸 Withdraw',tbuy:'🛒 Purchase',aUsers:'Total users',aActive:'Active',aBanned:'Banned',aPend:'Pending',
 aPendT:'Pending requests',aUsersT:'User management',aLogsT:'IP logs (latest 30)',cUser:'User',cRole:'Role',cEvent:'Event',cAct:'Actions',cBal:'Balance',ban:'Ban',unban:'Unban',none:'No data yet',
-orders:'Purchase history',refCode:'Referral code (optional)',myRef:'Your referral code',refShare:'Share this: you get 10,000đ when a friend completes their first purchase, they get 5,000đ off.',
+orders:'Purchase history',tabPending:'Pending',tabTop:'Top buyers',tabOrders:'Custom orders',tabUsers:'Users',tabLogs:'IP logs',search:'Search...',payPeriod:'Reward period',ePaid:'A payout was already recorded for this user this period.',eNoUser:'User not found.',refCode:'Referral code (optional)',myRef:'Your referral code',refShare:'Share this: you get 10,000đ when a friend completes their first purchase, they get 5,000đ off.',
 topBuyersT:'🏆 Top buyers',topBuyersS:'Ranked by real purchase total this week/month — deposits are not counted.',tabWeek:'This week',tabMonth:'This month',rank:'Rank',totalBuy:'Total bought',
 aRewardsT:'Top-buyer rewards',suggest:'Suggested',payUser:'Winner username',payAmt:'Amount sent (đ)',payNote:'Note (bank acct, transfer note...)',payGo:'Record payout',okPay:'Payout saved to history.',
 customT:'Custom Order',customS:'Describe the product you want, leave an email or Zalo number so admin can reach you to discuss and refine it.',customReqL:'What would you like built?',customContactL:'Email or Zalo number to reach you',customGo:'Send request',okOrder:'Request sent — admin will contact you using the info you left.',
@@ -476,30 +485,50 @@ async function loadAdmin(){
     sb.from('custom_orders').select('*').order('created_at',{ascending:false}).limit(50)]);
   const er=a.error||b.error||c.error||d.error;if(er)toast('Admin: '+er.message,'error');
   state.adm={users:a.data||[],pend:b.data||[],logs:c.data||[],orders:d.data||[]};
+  await loadTopBuyers();
 }
+function setAdminTab(x){state.adminTab=x;renderAdmin()}
+/* Lọc nhanh các dòng trong bảng ngay trên trình duyệt (không cần tải lại) */
+function filterRows(inp){const q=inp.value.trim().toLowerCase();
+  inp.closest('.card').querySelectorAll('tr').forEach(r=>{if(r.querySelector('td'))r.style.display=(!q||r.textContent.toLowerCase().includes(q))?'':'none'})}
 function renderAdmin(){
   if(!state.user||state.user.role!=='admin')return;
   const A=state.adm||{users:[],pend:[],logs:[],orders:[]},nm=id=>{const u=A.users.find(x=>x.id===id);return u?u.username:'?'};
+  const tab=state.adminTab||'pending';
   const stats=[[A.users.length,'aUsers'],[A.users.filter(u=>!u.banned).length,'aActive'],[A.users.filter(u=>u.banned).length,'aBanned'],[A.pend.length,'aPend']]
     .map(a=>`<div class="card"><div class="num">${a[0]}</div><span class="mut">${t(a[1])}</span></div>`).join('');
+  const openOrders=A.orders.filter(o=>o.status==='pending').length;
+  const tabs=[['pending','tabPending',A.pend.length],['top','tabTop',0],['orders','tabOrders',openOrders],['users','tabUsers',0],['logs','tabLogs',0]];
+  const bar=`<div class="atabs">${tabs.map(x=>`<button class="atab ${tab===x[0]?'on':''}" onclick="setAdminTab('${x[0]}')">${t(x[1])}${x[2]?`<span class="cnt">${x[2]}</span>`:''}</button>`).join('')}</div>`;
+  const srch=`<input class="srch" placeholder="${t('search')}" oninput="filterRows(this)">`;
+  const none=n=>`<tr><td colspan="${n}" class="mut">${t('none')}</td></tr>`;
   const sug=(total,w)=>total>=50000?(w?10000:7000):total>=20000?(w?5000:2000):0;
-  const rewRow=(x,i,w)=>`<tr><td>#${i+1}</td><td>${esc(x.username)}</td><td>${fmt(x.total)}</td><td class="gold">${fmt(sug(x.total,w))}</td></tr>`;
-  $('#abody').innerHTML=`<div class="stats" style="margin-top:20px">${stats}</div>
-  <div class="ap"><h3>${t('aPendT')}</h3><div class="card"><div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('cType')}</th><th>${t('cAmount')}</th><th>${t('cNote')}</th><th>${t('cTime')}</th><th>${t('cAct')}</th></tr>
-  ${A.pend.length?A.pend.map(x=>`<tr><td>${esc(nm(x.user_id))}</td><td>${t('t'+x.type)}</td><td>${fmt(x.amount)}</td><td>${x.qr?`<img class="qth" src="${esc(x.qr)}" alt="QR"> `:''}${esc(x.note||'')}</td><td>${ftime(x.created_at)}</td>
-  <td><button class="btn btn-success btn-sm" onclick="decideTx(${x.id},true)">✓</button> <button class="btn btn-danger btn-sm" onclick="decideTx(${x.id},false)">✕</button></td></tr>`).join(''):`<tr><td colspan="6" class="mut">${t('none')}</td></tr>`}</table></div></div></div>
-  <div class="ap"><h3>${t('aRewardsT')}</h3><div class="card"><div class="tw"><table><tr><th>${t('rank')}</th><th>${t('cUser')}</th><th>${t('totalBuy')}</th><th>${t('suggest')}</th></tr>
-  ${state.top.week.length?state.top.week.map((x,i)=>rewRow(x,i,true)).join(''):`<tr><td colspan="4" class="mut">${t('none')}</td></tr>`}</table></div>
-  <div class="row" style="flex-wrap:wrap"><input id="payU" placeholder="${t('payUser')}" style="flex:1;min-width:140px"><input id="payA" type="number" placeholder="${t('payAmt')}" style="flex:1;min-width:120px"></div>
-  <label>${t('payNote')}</label><input id="payN"><button class="btn btn-primary btn-sm mag" style="margin-top:10px" onclick="recordPayout()">${t('payGo')}</button></div></div>
-  <div class="ap"><h3>${t('aOrdersT')}</h3><div class="card"><div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('customReqL')}</th><th>${t('customContactL')}</th><th>${t('cStatus')}</th><th>${t('cTime')}</th><th>${t('cAct')}</th></tr>
-  ${A.orders.length?A.orders.map(o=>`<tr><td>${esc(o.username)}</td><td>${esc((o.request||'').slice(0,60))}${(o.request||'').length>60?'…':''}</td><td>${esc(o.contact)}</td><td><span class="badge ${bcls(o.status)}">${t('st_'+o.status)}</span></td><td>${ftime(o.created_at)}</td>
-  <td><button class="btn btn-ghost btn-sm" onclick="updateOrder(${o.id},'in_progress')">▶</button> <button class="btn btn-success btn-sm" onclick="updateOrder(${o.id},'done')">✓</button> <button class="btn btn-danger btn-sm" onclick="updateOrder(${o.id},'rejected')">✕</button></td></tr>`).join(''):`<tr><td colspan="6" class="mut">${t('none')}</td></tr>`}</table></div></div></div>
-  <div class="ap"><h3>${t('aUsersT')}</h3><div class="card"><div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('cRole')}</th><th>${t('cBal')}</th><th>${t('cStatus')}</th><th>${t('cAct')}</th></tr>
-  ${A.users.map(u=>`<tr><td>${esc(u.username)}</td><td>${u.role}</td><td>${fmt(u.balance)}</td><td><span class="badge ${u.banned?'banned':'active'}">${u.banned?t('aBanned'):t('aActive')}</span></td>
-  <td>${u.id===state.user.id?'—':`<button class="btn btn-ghost btn-sm" onclick="toggleBan('${u.id}',${!u.banned})">${u.banned?'✓ '+t('unban'):'⊘ '+t('ban')}</button>`}</td></tr>`).join('')}</table></div></div></div>
-  <div class="ap"><h3>${t('aLogsT')}</h3><div class="card"><div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('cEvent')}</th><th>User IP</th><th>Web IP</th><th>User agent</th><th>${t('cTime')}</th></tr>
-  ${A.logs.length?A.logs.map(l=>`<tr><td>${esc(l.username||'')}</td><td>${esc(l.event||'')}</td><td>${esc(l.user_ip||'')}</td><td>${esc(l.web_ip||'')}</td><td title="${esc(l.ua||'')}">${esc((l.ua||'').slice(0,34))}…</td><td>${ftime(l.created_at)}</td></tr>`).join(''):`<tr><td colspan="6" class="mut">${t('none')}</td></tr>`}</table></div></div></div>`;
+  let body='';
+  if(tab==='pending'){
+    body=`<div class="card" style="margin-top:16px">${srch}<div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('cType')}</th><th>${t('cAmount')}</th><th>${t('cNote')}</th><th>${t('cTime')}</th><th>${t('cAct')}</th></tr>
+    ${A.pend.length?A.pend.map(x=>`<tr><td>${esc(nm(x.user_id))}</td><td>${t('t'+x.type)}</td><td>${fmt(x.amount)}</td><td>${x.qr?`<img class="qth" src="${esc(x.qr)}" alt="QR"> `:''}${esc(x.note||'')}</td><td>${ftime(x.created_at)}</td>
+    <td><button class="btn btn-success btn-sm" onclick="decideTx(${x.id},true)">✓</button> <button class="btn btn-danger btn-sm" onclick="decideTx(${x.id},false)">✕</button></td></tr>`).join(''):none(6)}</table></div></div>`;
+  }else if(tab==='top'){
+    const card=(arr,label,w)=>`<div class="card" style="margin-top:16px"><h3>${label}</h3><div class="tw"><table><tr><th>${t('rank')}</th><th>${t('cUser')}</th><th>${t('totalBuy')}</th><th>${t('suggest')}</th></tr>
+    ${arr.length?arr.map((x,i)=>`<tr><td>#${i+1}</td><td>${esc(x.username)}</td><td>${fmt(x.total)}</td><td class="gold">${fmt(sug(x.total,w))}</td></tr>`).join(''):none(4)}</table></div></div>`;
+    body=card(state.top.week,t('tabWeek'),true)+card(state.top.month,t('tabMonth'),false)+
+    `<div class="card" style="margin-top:16px"><h3>${t('aRewardsT')}</h3>
+    <div class="row" style="flex-wrap:wrap"><input id="payU" placeholder="${t('payUser')}" style="flex:2;min-width:140px"><input id="payA" type="number" placeholder="${t('payAmt')}" style="flex:1;min-width:110px"></div>
+    <label>${t('payPeriod')}</label><select id="payP"><option value="week">${t('tabWeek')}</option><option value="month">${t('tabMonth')}</option></select>
+    <label>${t('payNote')}</label><input id="payN"><button class="btn btn-primary btn-sm mag" style="margin-top:12px" onclick="recordPayout()">${t('payGo')}</button></div>`;
+  }else if(tab==='orders'){
+    body=`<div class="card" style="margin-top:16px">${srch}<div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('customReqL')}</th><th>${t('customContactL')}</th><th>${t('cStatus')}</th><th>${t('cTime')}</th><th>${t('cAct')}</th></tr>
+    ${A.orders.length?A.orders.map(o=>`<tr><td>${esc(o.username)}</td><td>${esc((o.request||'').slice(0,120))}${(o.request||'').length>120?'…':''}</td><td>${esc(o.contact)}</td><td><span class="badge ${bcls(o.status)}">${t('st_'+o.status)}</span></td><td>${ftime(o.created_at)}</td>
+    <td><button class="btn btn-ghost btn-sm" onclick="updateOrder(${o.id},'in_progress')">▶</button> <button class="btn btn-success btn-sm" onclick="updateOrder(${o.id},'done')">✓</button> <button class="btn btn-danger btn-sm" onclick="updateOrder(${o.id},'rejected')">✕</button></td></tr>`).join(''):none(6)}</table></div></div>`;
+  }else if(tab==='users'){
+    body=`<div class="card" style="margin-top:16px">${srch}<div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('cRole')}</th><th>${t('cBal')}</th><th>${t('cStatus')}</th><th>${t('cAct')}</th></tr>
+    ${A.users.map(u=>`<tr><td>${esc(u.username)}</td><td>${u.role}</td><td>${fmt(u.balance)}</td><td><span class="badge ${u.banned?'banned':'active'}">${u.banned?t('aBanned'):t('aActive')}</span></td>
+    <td>${u.id===state.user.id?'—':`<button class="btn btn-ghost btn-sm" onclick="toggleBan('${u.id}',${!u.banned})">${u.banned?'✓ '+t('unban'):'⊘ '+t('ban')}</button>`}</td></tr>`).join('')}</table></div></div>`;
+  }else{
+    body=`<div class="card" style="margin-top:16px">${srch}<div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('cEvent')}</th><th>User IP</th><th>Web IP</th><th>User agent</th><th>${t('cTime')}</th></tr>
+    ${A.logs.length?A.logs.map(l=>`<tr><td>${esc(l.username||'')}</td><td>${esc(l.event||'')}</td><td>${esc(l.user_ip||'')}</td><td>${esc(l.web_ip||'')}</td><td title="${esc(l.ua||'')}">${esc((l.ua||'').slice(0,34))}…</td><td>${ftime(l.created_at)}</td></tr>`).join(''):none(6)}</table></div></div>`;
+  }
+  $('#abody').innerHTML=`<div class="stats" style="margin-top:20px">${stats}</div>${bar}${body}`;
 }
 async function decideTx(id,ok){
   const {error}=await sb.rpc('admin_decide',{p_tx:id,p_approve:ok});
@@ -507,10 +536,10 @@ async function decideTx(id,ok){
   toast(t(ok?'okApp':'okRej'),'success');await refreshView();
 }
 async function recordPayout(){
-  const un=($('#payU').value||'').trim().toLowerCase(),a=Math.floor(+$('#payA').value),note=$('#payN').value||'';
+  const un=($('#payU').value||'').trim().toLowerCase(),a=Math.floor(+$('#payA').value),note=$('#payN').value||'',per=$('#payP').value==='month'?'month':'week';
   if(!un||!(a>0))return toast(t('eFill'),'error');
-  const {error}=await sb.rpc('admin_record_payout',{p_username:un,p_period_type:'week',p_amount:a,p_note:note});
-  if(error)return toast(errMsg(error),'error');
+  const {error}=await sb.rpc('admin_record_payout',{p_username:un,p_period_type:per,p_amount:a,p_note:note});
+  if(error){const m=(error.message||'').toLowerCase();return toast(m.includes('duplicate')?t('ePaid'):m.includes('no_user')?t('eNoUser'):errMsg(error),'error')}
   $('#payU').value='';$('#payA').value='';$('#payN').value='';toast(t('okPay'),'success');
 }
 async function updateOrder(id,status){
