@@ -66,6 +66,8 @@ a.btn{display:inline-block;text-decoration:none}
 label{display:block;font-size:13px;color:var(--fg2);margin:12px 0 4px}
 input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;outline:none;transition:border-color .25s}
 input:focus{border-color:var(--gold)}
+textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;outline:none;transition:border-color .25s;font:inherit;resize:vertical}
+textarea:focus{border-color:var(--gold)}
 .qrprev{width:220px;height:220px;max-width:100%;margin:12px 0;border:1px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;background:#fff;font-size:40px;overflow:hidden}
 .qrprev img{max-width:100%;max-height:100%;object-fit:contain}
 .tw{overflow-x:auto;margin-top:12px}
@@ -96,9 +98,17 @@ tr:hover td{background:var(--bg3)}
 #musicBtn.on{border-color:var(--gold);opacity:1;box-shadow:0 0 20px rgba(212,175,55,.4)}
 @media(max-width:640px){.lang-btn{display:none}main{padding:84px 14px 90px}.brand{font-size:17px}.hero p{font-size:16px}.big{font-size:36px}.chip span.nm{display:none}.sec h2{font-size:25px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01s!important}}
+#preload{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .5s ease,visibility .5s}
+#preload.hide{opacity:0;visibility:hidden;pointer-events:none}
+#preload .pbrand{font-family:"Playfair Display",Georgia,serif;font-size:21px;letter-spacing:.14em}
+#preload .pbrand i{color:var(--gold);font-style:normal}
+#preload .pbar{width:180px;max-width:55vw;height:2px;background:var(--border);border-radius:99px;overflow:hidden}
+#preload .pbar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .3s ease;will-change:width}
+#preload .ppct{font-family:"Playfair Display",Georgia,serif;font-size:14px;color:var(--gold)}
 </style>
 </head>
 <body>
+<div id="preload"><div class="pbrand">DG<i>·</i>STORE</div><div class="pbar"><i id="pbarFill"></i></div><div class="ppct" id="pct">0%</div></div>
 <canvas id="fx"></canvas><div id="glow"></div>
 
 <header>
@@ -131,6 +141,7 @@ tr:hover td{background:var(--bg3)}
       </div>
     </div>
     <div class="grid" id="homeStats"></div>
+    <div class="sec" id="topBuyersSec" style="display:none"><h2>${t('topBuyersT')}</h2><p>${t('topBuyersS')}</p><div class="grid" id="topBuyers"></div></div>
     <div class="sec"><h2 data-i18n="featT"></h2><p data-i18n="featS"></p>
       <div class="grid">
         <div class="card hov"><h3 data-i18n="f1t"></h3><p class="mut" data-i18n="f1d"></p></div>
@@ -143,6 +154,13 @@ tr:hover td{background:var(--bg3)}
   <section class="view" id="v-market">
     <div class="sec" style="margin-top:20px"><h2 data-i18n="marketT"></h2><p data-i18n="marketS"></p></div>
     <div class="grid" id="grid"></div>
+    <div class="sec"><h2 data-i18n="customT"></h2><p data-i18n="customS"></p>
+      <div class="card" style="margin-top:18px">
+        <label data-i18n="customReqL"></label><textarea id="coReq" rows="4"></textarea>
+        <label data-i18n="customContactL"></label><input id="coContact" placeholder="email@... / Zalo 09xx xxx xxx">
+        <button class="btn btn-primary mag" style="margin-top:14px" onclick="submitCustomOrder()" data-i18n="customGo"></button>
+      </div>
+    </div>
   </section>
   <!-- ===== WALLET ===== -->
   <section class="view" id="v-wallet"><div id="wbody"></div></section>
@@ -167,7 +185,7 @@ const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 /* Đăng nhập bằng tên đăng nhập: app ghép thành email ảo. Nếu đăng ký báo "email không hợp lệ", đổi tên miền này. */
 const EMAIL_DOMAIN='gmail.com';
 const sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
-const state={user:null,lang:'vi',theme:'dark',authTab:'login',qr:null,code:null,view:'home',listings:[],tx:[],adm:null,dl:{},busy:false};
+const state={user:null,lang:'vi',theme:'dark',authTab:'login',qr:null,code:null,view:'home',listings:[],tx:[],myOrders:[],adm:null,dl:{},busy:false,top:{week:[],month:[]},pendingRef:''};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /* QR nhận tiền cố định của admin (ảnh đã cắt chỉ còn mã QR) */
@@ -187,7 +205,11 @@ balance:'Số dư',dep:'Nạp tiền',wd:'Rút tiền',upQR:'Tải lên mã QR n
 history:'Lịch sử giao dịch',cType:'Loại',cAmount:'Số tiền',cNote:'Ghi chú',cStatus:'Trạng thái',cTime:'Thời gian',pending:'Chờ duyệt',approved:'Đã duyệt',rejected:'Từ chối',
 tdeposit:'💰 Nạp',twithdraw:'💸 Rút',tbuy:'🛒 Mua',aUsers:'Tổng người dùng',aActive:'Đang hoạt động',aBanned:'Bị khoá',aPend:'Chờ duyệt',
 aPendT:'Yêu cầu chờ duyệt',aUsersT:'Quản lý người dùng',aLogsT:'Nhật ký IP (30 gần nhất)',cUser:'Tài khoản',cRole:'Vai trò',cEvent:'Sự kiện',cAct:'Thao tác',cBal:'Số dư',ban:'Khoá',unban:'Mở khoá',none:'Chưa có dữ liệu',
-orders:'Lịch sử mua hàng',oCode:'Mã đơn',oProd:'Sản phẩm',oBuyer:'Người mua',dl:'Tải về',copy:'Sao chép',copied:'Đã sao chép nội dung.',scanQR:'Quét mã QR, chuyển đúng số tiền và nội dung bên dưới, rồi gửi yêu cầu.',
+orders:'Lịch sử mua hàng',refCode:'Mã giới thiệu (nếu có)',myRef:'Mã giới thiệu của bạn',refShare:'Chia sẻ mã này: bạn được 10.000đ khi bạn bè mua đơn đầu tiên, họ được giảm 5.000đ.',
+topBuyersT:'🏆 Top người mua',topBuyersS:'Xếp hạng theo tổng tiền mua thật trong tuần/tháng này — không tính tiền nạp.',tabWeek:'Tuần này',tabMonth:'Tháng này',rank:'Hạng',totalBuy:'Tổng đã mua',
+aRewardsT:'Thưởng top người mua',suggest:'Gợi ý',payUser:'Tên đăng nhập người thắng',payAmt:'Số tiền đã chuyển (đ)',payNote:'Ghi chú (STK, nội dung CK...)',payGo:'Ghi nhận đã trả',okPay:'Đã lưu lịch sử trả thưởng.',
+customT:'Đặt làm theo yêu cầu',customS:'Mô tả sản phẩm bạn muốn, để lại email hoặc Zalo để admin liên hệ trao đổi, cải tiến.',customReqL:'Bạn muốn làm sản phẩm gì?',customContactL:'Email hoặc số Zalo để liên hệ',customGo:'Gửi yêu cầu',okOrder:'Đã gửi yêu cầu, admin sẽ liên hệ qua thông tin bạn để lại.',
+aOrdersT:'Yêu cầu đặt làm riêng',myOrdersT:'Yêu cầu đặt làm của bạn',st_pending:'Chờ xử lý',st_in_progress:'Đang làm',st_done:'Hoàn thành',st_rejected:'Từ chối',okOrderUpd:'Đã cập nhật trạng thái.',oCode:'Mã đơn',oProd:'Sản phẩm',oBuyer:'Người mua',dl:'Tải về',copy:'Sao chép',copied:'Đã sao chép nội dung.',scanQR:'Quét mã QR, chuyển đúng số tiền và nội dung bên dưới, rồi gửi yêu cầu.',
 eSignup:'Supabase đang tắt đăng ký mới: bật Allow new users to sign up.',eRate:'Supabase đang chặn gửi email (rate limit). Hãy tắt Confirm email rồi chờ khoảng 1 giờ.',eMail:'Email ảo bị từ chối, hãy đổi EMAIL_DOMAIN trong code.',ePass:'Mật khẩu tối thiểu 6 ký tự.',eUser:'Tên đăng nhập 3–20 ký tự: a-z, 0-9, _',eNet:'Lỗi kết nối, vui lòng thử lại.',eConfirm:'Chưa vào được: hãy tắt "Confirm email" trong Supabase.',
 user:'Tên đăng nhập',pass:'Mật khẩu',conf:'Nhập lại mật khẩu',
 eFill:'Vui lòng điền đầy đủ thông tin.',eMatch:'Mật khẩu nhập lại không khớp.',eExists:'Tên đăng nhập đã tồn tại.',eBad:'Sai tên đăng nhập hoặc mật khẩu.',eBanned:'Tài khoản đã bị khoá.',eBal:'Số dư không đủ, hãy nạp thêm.',eMin:'Số tiền tối thiểu 10.000 ₫.',eQR:'Hãy tải lên mã QR trước.',eMusic:'Không tìm thấy bg-music.mp3.',
@@ -201,7 +223,11 @@ balance:'Balance',dep:'Deposit',wd:'Withdraw',upQR:'Upload your receiving QR (op
 history:'Transaction history',cType:'Type',cAmount:'Amount',cNote:'Note',cStatus:'Status',cTime:'Time',pending:'Pending',approved:'Approved',rejected:'Rejected',
 tdeposit:'💰 Deposit',twithdraw:'💸 Withdraw',tbuy:'🛒 Purchase',aUsers:'Total users',aActive:'Active',aBanned:'Banned',aPend:'Pending',
 aPendT:'Pending requests',aUsersT:'User management',aLogsT:'IP logs (latest 30)',cUser:'User',cRole:'Role',cEvent:'Event',cAct:'Actions',cBal:'Balance',ban:'Ban',unban:'Unban',none:'No data yet',
-orders:'Purchase history',oCode:'Order ID',oProd:'Product',oBuyer:'Buyer',dl:'Download',copy:'Copy',copied:'Note copied.',scanQR:'Scan the QR, transfer the exact amount and note below, then submit.',
+orders:'Purchase history',refCode:'Referral code (optional)',myRef:'Your referral code',refShare:'Share this: you get 10,000đ when a friend completes their first purchase, they get 5,000đ off.',
+topBuyersT:'🏆 Top buyers',topBuyersS:'Ranked by real purchase total this week/month — deposits are not counted.',tabWeek:'This week',tabMonth:'This month',rank:'Rank',totalBuy:'Total bought',
+aRewardsT:'Top-buyer rewards',suggest:'Suggested',payUser:'Winner username',payAmt:'Amount sent (đ)',payNote:'Note (bank acct, transfer note...)',payGo:'Record payout',okPay:'Payout saved to history.',
+customT:'Custom Order',customS:'Describe the product you want, leave an email or Zalo number so admin can reach you to discuss and refine it.',customReqL:'What would you like built?',customContactL:'Email or Zalo number to reach you',customGo:'Send request',okOrder:'Request sent — admin will contact you using the info you left.',
+aOrdersT:'Custom order requests',myOrdersT:'Your custom requests',st_pending:'Pending',st_in_progress:'In progress',st_done:'Done',st_rejected:'Rejected',okOrderUpd:'Status updated.',oCode:'Order ID',oProd:'Product',oBuyer:'Buyer',dl:'Download',copy:'Copy',copied:'Note copied.',scanQR:'Scan the QR, transfer the exact amount and note below, then submit.',
 eSignup:'Supabase has signups disabled: enable Allow new users to sign up.',eRate:'Supabase email rate limit hit. Turn off Confirm email and wait about 1 hour.',eMail:'Virtual email rejected, change EMAIL_DOMAIN in the code.',ePass:'Password must be at least 6 characters.',eUser:'Username 3–20 chars: a-z, 0-9, _',eNet:'Connection error, please try again.',eConfirm:'Cannot sign in: turn off "Confirm email" in Supabase.',
 user:'Username',pass:'Password',conf:'Confirm password',
 eFill:'Please fill in all fields.',eMatch:'Passwords do not match.',eExists:'Username already taken.',eBad:'Wrong username or password.',eBanned:'This account has been banned.',eBal:'Insufficient balance, please deposit.',eMin:'Minimum amount is 10,000 ₫.',eQR:'Upload a QR code first.',eMusic:'bg-music.mp3 not found.',
@@ -212,11 +238,14 @@ function applyI18n(){document.documentElement.lang=state.lang;document.querySele
 /* ===== Tiện ích ===== */
 const fmt=n=>Number(n).toLocaleString('vi-VN')+' ₫';
 const ftime=ts=>new Date(ts).toLocaleString(state.lang==='vi'?'vi-VN':'en-GB');
+const bcls=s=>({pending:'pending',in_progress:'pending',done:'approved',rejected:'rejected'}[s]||'');
 function toast(msg,type){
   const e=document.createElement('div');e.className='toast '+(type||'');e.textContent=msg;$('#toasts').appendChild(e);
   requestAnimationFrame(()=>requestAnimationFrame(()=>e.classList.add('show')));
   setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),450)},3000);
 }
+function setPct(n){const b=$('#pbarFill'),p=$('#pct');if(b)b.style.width=n+'%';if(p)p.textContent=n+'%'}
+function hidePreload(){const el=$('#preload');if(el)el.classList.add('hide')}
 async function getUserIP(){
   try{const c=new AbortController();setTimeout(()=>c.abort(),3500);
     const r=await fetch('https://api.ipify.org?format=json',{signal:c.signal});return (await r.json()).ip}
@@ -246,7 +275,8 @@ function renderAuthForm(){
   $('#authBox').innerHTML=`<div class="tabs"><button class="${r?'':'on'}" onclick="switchAuthTab('login')">${t('login')}</button><button class="${r?'on':''}" onclick="switchAuthTab('register')">${t('register')}</button></div>
   <label>${t('user')}</label><input id="aU" autocomplete="username">
   <label>${t('pass')}</label><input id="aP" type="password" autocomplete="${r?'new-password':'current-password'}">
-  ${r?`<label>${t('conf')}</label><input id="aC" type="password" autocomplete="new-password">`:''}
+  ${r?`<label>${t('conf')}</label><input id="aC" type="password" autocomplete="new-password">
+  <label>${t('refCode')}</label><input id="aRef" placeholder="DG-XXXXXX" value="${esc(state.pendingRef||'')}">`:''}
   <button class="btn btn-primary mag" id="aGo">${r?t('register'):t('login')}</button>`;
   $('#aGo').onclick=r?doRegister:doLogin;
   $('#authBox').onkeydown=e=>{if(e.key==='Enter')$('#aGo').click()};
@@ -257,13 +287,15 @@ function renderAuthForm(){
 async function loadMine(){
   if(!sb)return false;
   const {data:{session}}=await sb.auth.getSession();
-  if(!session){state.user=null;state.tx=[];return false}
+  if(!session){state.user=null;state.tx=[];state.myOrders=[];return false}
   const {data:p}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();
   if(!p){state.user=null;return false}
   if(p.banned){await sb.auth.signOut();state.user=null;state.tx=[];toast(t('eBanned'),'error');return false}
   state.user=p;
-  const r=await sb.from('tx').select('*').eq('user_id',p.id).order('created_at',{ascending:false});
-  state.tx=r.data||[];return true;
+  const [r,o]=await Promise.all([
+    sb.from('tx').select('*').eq('user_id',p.id).order('created_at',{ascending:false}),
+    sb.from('custom_orders').select('*').eq('user_id',p.id).order('created_at',{ascending:false})]);
+  state.tx=r.data||[];state.myOrders=o.data||[];return true;
 }
 async function doLogin(){
   const n=$('#aU').value.trim().toLowerCase(),p=$('#aP').value;
@@ -280,7 +312,8 @@ async function doRegister(){
   if(!/^[a-z0-9_]{3,20}$/.test(n))return toast(t('eUser'),'error');
   if(p.length<6)return toast(t('ePass'),'error');
   if(p!==c)return toast(t('eMatch'),'error');
-  const {data,error}=await sb.auth.signUp({email:toEmail(n),password:p,options:{data:{username:n}}});
+  const ref=($('#aRef').value||'').trim().toUpperCase();
+  const {data,error}=await sb.auth.signUp({email:toEmail(n),password:p,options:{data:{username:n,ref}}});
   if(error)return toast(errMsg(error),'error');
   if(!data.session)return toast(t('eConfirm'),'error');
   await loadMine();closeAuth();renderAll();toast(t('okReg'),'success');logEvent('register');
@@ -306,7 +339,7 @@ function toggleDrawer(f){
   const o=typeof f==='boolean'?f:!$('#drawer').classList.contains('open');
   $('#drawer').classList.toggle('open',o);$('#ov').classList.toggle('open',o);
 }
-function renderAll(){renderHeader();renderDrawerUser();renderHome();renderMarket();
+function renderAll(){renderHeader();renderDrawerUser();renderHome();renderMarket();renderTopBuyers();
   if(state.view==='wallet')renderWallet();if(state.view==='orders')renderOrders();if(state.view==='admin')renderAdmin();applyI18n()}
 function renderHeader(){
   const u=state.user,flag=state.lang==='vi'?'🇻🇳':'🇬🇧',ic=state.theme==='dark'?'🌙':'☀️';
@@ -327,6 +360,18 @@ function renderHome(){
   if(u)c.push([fmt(u.balance),'balance'],[state.tx.filter(x=>x.type==='buy').length,'orders']);
   $('#homeStats').innerHTML=c.map(a=>`<div class="card hov"><div class="num">${a[0]}</div><span class="mut">${t(a[1])}</span></div>`).join('');
 }
+/* Bảng xếp hạng người mua: hàm public, ai cũng gọi được kể cả chưa đăng nhập */
+async function loadTopBuyers(){
+  const [w,m]=await Promise.all([sb.rpc('top_buyers',{p_period:'week'}),sb.rpc('top_buyers',{p_period:'month'})]);
+  state.top={week:w.data||[],month:m.data||[]};
+}
+function renderTopBuyers(){
+  const has=state.top.week.length||state.top.month.length;
+  $('#topBuyersSec').style.display=has?'':'none';if(!has)return;
+  const col=(arr,label)=>`<div class="card hov"><h3>${label}</h3><div class="tw"><table><tr><th>${t('rank')}</th><th>${t('cUser')}</th><th>${t('totalBuy')}</th></tr>
+  ${arr.length?arr.map((x,i)=>`<tr><td>#${i+1}</td><td>${esc(x.username)}</td><td class="gold">${fmt(x.total)}</td></tr>`).join(''):`<tr><td colspan="3" class="mut">${t('none')}</td></tr>`}</table></div></div>`;
+  $('#topBuyers').innerHTML=col(state.top.week,t('tabWeek'))+col(state.top.month,t('tabMonth'));
+}
 function renderMarket(){
   $('#grid').innerHTML=state.listings.map(l=>`<div class="card hov"><h3>${esc(l.title)}</h3><p class="mut">${esc(l['desc_'+state.lang]||'')}</p>
   <div class="tags">${(l.tags||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div>
@@ -346,6 +391,7 @@ const noteFor=()=>{if(!state.code)state.code=String(1000+Math.floor(Math.random(
 function renderWallet(){
   const u=state.user;if(!u)return;
   $('#wbody').innerHTML=`<div class="card" style="margin-top:20px"><span class="mut">${t('balance')}</span><div class="big">${fmt(u.balance)}</div></div>
+  <div class="card"><h3>${t('myRef')}</h3><div class="row" style="margin:0"><input readonly value="${esc(u.referral_code||'')}"><button class="btn btn-ghost btn-sm" onclick="copyRef()">${t('copy')}</button></div><p class="mut" style="margin-top:10px">${t('refShare')}</p></div>
   <div class="two">
    <div class="card"><h3>${t('dep')}</h3><p class="mut">${t('scanQR')}</p>
     <div class="qrprev"><img src="${ADMIN_QR}" alt="QR" style="image-rendering:pixelated"></div>
@@ -379,6 +425,8 @@ function cropQRImage(img){
   const ow=x1-x0+1,oh=y1-y0+1,o=document.createElement('canvas');o.width=ow;o.height=oh;
   o.getContext('2d').drawImage(c,x0,y0,ow,oh,0,0,ow,oh);const r=o.toDataURL('image/png');return r.length>700000?o.toDataURL('image/jpeg',.8):r;
 }
+function copyRef(){const v=(state.user&&state.user.referral_code)||'';
+  (navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).catch(()=>{}).then(()=>toast(t('copied'),'success'))}
 function copyNote(){const i=$('#depNote');
   (navigator.clipboard?navigator.clipboard.writeText(i.value):Promise.reject()).catch(()=>{i.select();document.execCommand&&document.execCommand('copy')}).then(()=>toast(t('copied'),'success'))}
 async function submitDeposit(){
@@ -396,6 +444,14 @@ async function submitWithdraw(){
   if(error)return toast(errMsg(error),'error');
   state.qr=null;toast(t('okReq'),'success');await refreshView();
 }
+async function submitCustomOrder(){
+  if(!state.user)return openAuth('login');
+  const req=($('#coReq').value||'').trim(),c=($('#coContact').value||'').trim();
+  if(req.length<5||c.length<3)return toast(t('eFill'),'error');
+  const {error}=await sb.rpc('create_custom_order',{p_request:req,p_contact:c});
+  if(error)return toast(errMsg(error),'error');
+  $('#coReq').value='';$('#coContact').value='';toast(t('okOrder'),'success');await refreshView();
+}
 
 /* ===== Lịch sử mua hàng: link tải chỉ server trả cho người đã mua ===== */
 async function loadDownloads(){
@@ -404,29 +460,41 @@ async function loadDownloads(){
 }
 function renderOrders(){
   const u=state.user;if(!u)return;
-  const my=state.tx.filter(x=>x.type==='buy');
+  const my=state.tx.filter(x=>x.type==='buy'),mo=state.myOrders||[];
   $('#obody').innerHTML=`<div class="sec" style="margin-top:20px"><h2>${t('orders')}</h2></div><div class="card" style="margin-top:18px"><div class="tw"><table><tr><th>${t('oCode')}</th><th>${t('oProd')}</th><th>${t('oBuyer')}</th><th>${t('cAmount')}</th><th>${t('cTime')}</th><th></th></tr>
-  ${my.length?my.map(x=>{const l=state.dl[x.id];return `<tr><td><b class="gold">${esc(x.code||'')}</b></td><td>${esc(x.note||'')}</td><td>${esc(u.username)}</td><td>${fmt(x.amount)}</td><td>${ftime(x.created_at)}</td><td>${/^https?:\/\//i.test(l||'')?`<a class="btn btn-primary btn-sm" href="${esc(l)}" target="_blank" rel="noopener">${t('dl')}</a>`:'…'}</td></tr>`}).join(''):`<tr><td colspan="6" class="mut">${t('none')}</td></tr>`}</table></div></div>`;
+  ${my.length?my.map(x=>{const l=state.dl[x.id];return `<tr><td><b class="gold">${esc(x.code||'')}</b></td><td>${esc(x.note||'')}</td><td>${esc(u.username)}</td><td>${fmt(x.amount)}</td><td>${ftime(x.created_at)}</td><td>${/^https?:\/\//i.test(l||'')?`<a class="btn btn-primary btn-sm" href="${esc(l)}" target="_blank" rel="noopener">${t('dl')}</a>`:'…'}</td></tr>`}).join(''):`<tr><td colspan="6" class="mut">${t('none')}</td></tr>`}</table></div></div>
+  <div class="card" style="margin-top:18px"><h3>${t('myOrdersT')}</h3><div class="tw"><table><tr><th>${t('customReqL')}</th><th>${t('cStatus')}</th><th>${t('cTime')}</th></tr>
+  ${mo.length?mo.map(o=>`<tr><td>${esc((o.request||'').slice(0,80))}${(o.request||'').length>80?'…':''}</td><td><span class="badge ${bcls(o.status)}">${t('st_'+o.status)}</span></td><td>${ftime(o.created_at)}</td></tr>`).join(''):`<tr><td colspan="3" class="mut">${t('none')}</td></tr>`}</table></div></div>`;
 }
 
 /* ===== Quản trị (dữ liệu của mọi người dùng, chỉ admin đọc được) ===== */
 async function loadAdmin(){
-  const [a,b,c]=await Promise.all([
+  const [a,b,c,d]=await Promise.all([
     sb.from('profiles').select('*').order('created_at'),
     sb.from('tx').select('*').in('type',['deposit','withdraw']).eq('status','pending').order('created_at',{ascending:false}),
-    sb.from('logs').select('*').order('created_at',{ascending:false}).limit(30)]);
-  const er=a.error||b.error||c.error;if(er)toast('Admin: '+er.message,'error');
-  state.adm={users:a.data||[],pend:b.data||[],logs:c.data||[]};
+    sb.from('logs').select('*').order('created_at',{ascending:false}).limit(30),
+    sb.from('custom_orders').select('*').order('created_at',{ascending:false}).limit(50)]);
+  const er=a.error||b.error||c.error||d.error;if(er)toast('Admin: '+er.message,'error');
+  state.adm={users:a.data||[],pend:b.data||[],logs:c.data||[],orders:d.data||[]};
 }
 function renderAdmin(){
   if(!state.user||state.user.role!=='admin')return;
-  const A=state.adm||{users:[],pend:[],logs:[]},nm=id=>{const u=A.users.find(x=>x.id===id);return u?u.username:'?'};
+  const A=state.adm||{users:[],pend:[],logs:[],orders:[]},nm=id=>{const u=A.users.find(x=>x.id===id);return u?u.username:'?'};
   const stats=[[A.users.length,'aUsers'],[A.users.filter(u=>!u.banned).length,'aActive'],[A.users.filter(u=>u.banned).length,'aBanned'],[A.pend.length,'aPend']]
     .map(a=>`<div class="card"><div class="num">${a[0]}</div><span class="mut">${t(a[1])}</span></div>`).join('');
+  const sug=(total,w)=>total>=50000?(w?10000:7000):total>=20000?(w?5000:2000):0;
+  const rewRow=(x,i,w)=>`<tr><td>#${i+1}</td><td>${esc(x.username)}</td><td>${fmt(x.total)}</td><td class="gold">${fmt(sug(x.total,w))}</td></tr>`;
   $('#abody').innerHTML=`<div class="stats" style="margin-top:20px">${stats}</div>
   <div class="ap"><h3>${t('aPendT')}</h3><div class="card"><div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('cType')}</th><th>${t('cAmount')}</th><th>${t('cNote')}</th><th>${t('cTime')}</th><th>${t('cAct')}</th></tr>
   ${A.pend.length?A.pend.map(x=>`<tr><td>${esc(nm(x.user_id))}</td><td>${t('t'+x.type)}</td><td>${fmt(x.amount)}</td><td>${x.qr?`<img class="qth" src="${esc(x.qr)}" alt="QR"> `:''}${esc(x.note||'')}</td><td>${ftime(x.created_at)}</td>
   <td><button class="btn btn-success btn-sm" onclick="decideTx(${x.id},true)">✓</button> <button class="btn btn-danger btn-sm" onclick="decideTx(${x.id},false)">✕</button></td></tr>`).join(''):`<tr><td colspan="6" class="mut">${t('none')}</td></tr>`}</table></div></div></div>
+  <div class="ap"><h3>${t('aRewardsT')}</h3><div class="card"><div class="tw"><table><tr><th>${t('rank')}</th><th>${t('cUser')}</th><th>${t('totalBuy')}</th><th>${t('suggest')}</th></tr>
+  ${state.top.week.length?state.top.week.map((x,i)=>rewRow(x,i,true)).join(''):`<tr><td colspan="4" class="mut">${t('none')}</td></tr>`}</table></div>
+  <div class="row" style="flex-wrap:wrap"><input id="payU" placeholder="${t('payUser')}" style="flex:1;min-width:140px"><input id="payA" type="number" placeholder="${t('payAmt')}" style="flex:1;min-width:120px"></div>
+  <label>${t('payNote')}</label><input id="payN"><button class="btn btn-primary btn-sm mag" style="margin-top:10px" onclick="recordPayout()">${t('payGo')}</button></div></div>
+  <div class="ap"><h3>${t('aOrdersT')}</h3><div class="card"><div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('customReqL')}</th><th>${t('customContactL')}</th><th>${t('cStatus')}</th><th>${t('cTime')}</th><th>${t('cAct')}</th></tr>
+  ${A.orders.length?A.orders.map(o=>`<tr><td>${esc(o.username)}</td><td>${esc((o.request||'').slice(0,60))}${(o.request||'').length>60?'…':''}</td><td>${esc(o.contact)}</td><td><span class="badge ${bcls(o.status)}">${t('st_'+o.status)}</span></td><td>${ftime(o.created_at)}</td>
+  <td><button class="btn btn-ghost btn-sm" onclick="updateOrder(${o.id},'in_progress')">▶</button> <button class="btn btn-success btn-sm" onclick="updateOrder(${o.id},'done')">✓</button> <button class="btn btn-danger btn-sm" onclick="updateOrder(${o.id},'rejected')">✕</button></td></tr>`).join(''):`<tr><td colspan="6" class="mut">${t('none')}</td></tr>`}</table></div></div></div>
   <div class="ap"><h3>${t('aUsersT')}</h3><div class="card"><div class="tw"><table><tr><th>${t('cUser')}</th><th>${t('cRole')}</th><th>${t('cBal')}</th><th>${t('cStatus')}</th><th>${t('cAct')}</th></tr>
   ${A.users.map(u=>`<tr><td>${esc(u.username)}</td><td>${u.role}</td><td>${fmt(u.balance)}</td><td><span class="badge ${u.banned?'banned':'active'}">${u.banned?t('aBanned'):t('aActive')}</span></td>
   <td>${u.id===state.user.id?'—':`<button class="btn btn-ghost btn-sm" onclick="toggleBan('${u.id}',${!u.banned})">${u.banned?'✓ '+t('unban'):'⊘ '+t('ban')}</button>`}</td></tr>`).join('')}</table></div></div></div>
@@ -437,6 +505,18 @@ async function decideTx(id,ok){
   const {error}=await sb.rpc('admin_decide',{p_tx:id,p_approve:ok});
   if(error)return toast(errMsg(error),'error');
   toast(t(ok?'okApp':'okRej'),'success');await refreshView();
+}
+async function recordPayout(){
+  const un=($('#payU').value||'').trim().toLowerCase(),a=Math.floor(+$('#payA').value),note=$('#payN').value||'';
+  if(!un||!(a>0))return toast(t('eFill'),'error');
+  const {error}=await sb.rpc('admin_record_payout',{p_username:un,p_period_type:'week',p_amount:a,p_note:note});
+  if(error)return toast(errMsg(error),'error');
+  $('#payU').value='';$('#payA').value='';$('#payN').value='';toast(t('okPay'),'success');
+}
+async function updateOrder(id,status){
+  const {error}=await sb.rpc('admin_update_order',{p_id:id,p_status:status,p_note:null});
+  if(error)return toast(errMsg(error),'error');
+  toast(t('okOrderUpd'),'success');await refreshView();
 }
 async function toggleBan(id,ban){
   const {error}=await sb.rpc('admin_set_ban',{p_user:id,p_ban:ban});
@@ -498,15 +578,17 @@ mb.onclick=()=>{dropGesture();
 
 /* ===== Khởi tạo ===== */
 async function init(){
-  loadPref();applyTheme();resizeCanvas();initParticles();animateFX();
+  try{const q=new URLSearchParams(location.search).get('ref');if(q)state.pendingRef=q.toUpperCase()}catch(e){}
+  setPct(10);loadPref();applyTheme();resizeCanvas();initParticles();animateFX();
   $('#burger').onclick=()=>toggleDrawer();$('#ov').onclick=()=>toggleDrawer(false);
   ['#themeBtn','#themeBtn2'].forEach(s=>$(s).onclick=toggleTheme);['#langBtn','#langBtn2'].forEach(s=>$(s).onclick=toggleLang);
   $('#authOv').onclick=e=>{if(e.target.id==='authOv')closeAuth()};
   document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)switchView(g.dataset.go)});
   renderAll();toast(t('welcome'));startMusic();
-  if(!sb)return toast(t('eNet'),'error');
-  const l=await sb.from('listings').select('*').order('id');state.listings=l.data||[];
-  await loadMine();renderAll();
+  if(!sb){setPct(100);hidePreload();return toast(t('eNet'),'error')}
+  const l=await sb.from('listings').select('*').order('id');state.listings=l.data||[];setPct(40);
+  await loadTopBuyers();setPct(70);
+  await loadMine();setPct(100);renderAll();hidePreload();
 }
 init();
 </script>
