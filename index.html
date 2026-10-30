@@ -531,7 +531,7 @@ function toggleDrawer(f){
   const o=typeof f==='boolean'?f:!$('#drawer').classList.contains('open');
   $('#drawer').classList.toggle('open',o);$('#ov').classList.toggle('open',o);
 }
-function renderAll(){renderHeader();renderDrawerUser();renderHome();renderMarket();renderTopBuyers();
+function renderAll(){renderHeader();renderDrawerUser();renderHome();renderMarket();renderTopBuyers();armReveals();
   if(state.view==='wallet')renderWallet();if(state.view==='orders')renderOrders();if(state.view==='admin')renderAdmin();applyI18n()}
 function renderHeader(){
   const u=state.user,flag=state.lang==='vi'?'🇻🇳':'🇬🇧',ic=state.theme==='dark'?'🌙':'☀️';
