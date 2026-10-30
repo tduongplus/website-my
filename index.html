@@ -192,9 +192,16 @@ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' wid
 /* ===== Banner riêng cho từng sản phẩm — màu + icon đổi theo loại, trôi nhẹ liên tục =====
    (logo trong ảnh mẫu chỉ là ý tưởng; ở đây chọn icon theo tag/tên sản phẩm, không dùng ảnh ngoài
    để khỏi phụ thuộc link có thể chết — vẽ bằng SVG cho nhẹ và luôn hiển thị đúng). */
-.pbanner{position:relative;margin:-22px -22px 14px;height:84px;overflow:hidden;background-size:200% 200%;animation:pbdrift 9s ease-in-out infinite alternate}
+.pbanner{position:relative;margin:-22px -22px 14px;height:84px;overflow:hidden;background-size:200% 200%;animation:pbdrift 9s ease-in-out infinite alternate;perspective:280px}
 @keyframes pbdrift{to{background-position:100% 60%}}
-.pbanner svg{position:absolute;right:-8px;bottom:-12px;width:94px;height:94px;opacity:.25;stroke:#fff;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.pbanner i{position:absolute;right:26px;top:66%;width:40px;height:10px;border-radius:50%;background:rgba(0,0,0,.35);filter:blur(3px);animation:pbShadow 3.2s ease-in-out infinite}
+@keyframes pbShadow{0%,100%{transform:scaleX(1);opacity:.6}50%{transform:scaleX(.55);opacity:.3}}
+.pbanner svg{position:absolute;right:18px;top:50%;width:52px;height:52px;opacity:.95;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4));animation:pbSpin3d 5.5s ease-in-out infinite}
+@keyframes pbSpin3d{
+  0%{transform:translateY(-50%) translateY(0) rotateY(0deg) rotateX(8deg)}
+  50%{transform:translateY(-50%) translateY(-10px) rotateY(180deg) rotateX(8deg)}
+  100%{transform:translateY(-50%) translateY(0) rotateY(360deg) rotateX(8deg)}
+}
 .pb-0{background-image:linear-gradient(125deg,#3b2a05,#8a6a1d 45%,#d4af37 75%,#3b2a05)}
 .pb-1{background-image:linear-gradient(125deg,#3a0f1c,#7a2340 45%,#d1527c 75%,#3a0f1c)}
 .pb-2{background-image:linear-gradient(125deg,#0b2b2c,#1c6e6a 45%,#4fd1c5 75%,#0b2b2c)}
@@ -582,7 +589,7 @@ function bannerHTML(l,i){
   else if(/ecommerce|cart|shop|stripe/.test(s))icon='cart';
   else if(/bank|flutter|figma|mobile/.test(s))icon='card';
   else if(/portfolio|three|design/.test(s))icon='frame';
-  return `<div class="pbanner pb-${i%4}"><svg viewBox="0 0 64 64" aria-hidden="true">${PB_ICON[icon]}</svg></div>`;
+  return `<div class="pbanner pb-${i%4}"><i></i><svg viewBox="0 0 64 64" aria-hidden="true">${PB_ICON[icon]}</svg></div>`;
 }
 function renderMarket(){
   $('#grid').innerHTML=state.listings.map((l,i)=>`<div class="card hov rv">${bannerHTML(l,i)}<h3>${esc(l.title)}</h3><p class="mut">${esc(l['desc_'+state.lang]||'')}</p>
