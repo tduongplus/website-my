@@ -169,7 +169,15 @@ select{width:100%;background:var(--bg2);border:1px solid var(--border);border-ra
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 /* ===== Nhân vật doanh nhân đi vào khi mở tab Đăng ký — rig khớp nối, JS tính góc mỗi khung hình ===== */
 .ar-wrap{display:flex;justify-content:center;align-items:flex-end;height:150px;margin-bottom:4px;overflow:visible}
-.ar-stage{width:94px;height:154px;flex:none}
+.ar-stage{position:relative;width:94px;height:154px;flex:none}
+/* Form đăng ký nằm gọn trong cặp, "nổ" bung ra khi nắp mở (transform-origin đặt bằng JS đúng vị trí cặp) */
+.ar-form{transition:opacity .4s ease,transform .65s cubic-bezier(.34,1.56,.64,1)}
+.ar-form.pre{opacity:0;transform:scale(.08);pointer-events:none}
+.ar-burst{position:absolute;width:0;height:0;pointer-events:none;z-index:3}
+.ar-burst u{position:absolute;left:-22px;top:-22px;width:44px;height:44px;border-radius:50%;border:2px solid var(--gold2);box-shadow:0 0 16px var(--gold);animation:arRing .7s ease-out forwards}
+@keyframes arRing{from{transform:scale(.2);opacity:1}to{transform:scale(2.8);opacity:0}}
+.ar-burst i{position:absolute;left:0;top:0;width:4px;height:4px;border-radius:50%;background:var(--gold2);box-shadow:0 0 8px var(--gold);animation:arSp .85s ease-out forwards}
+@keyframes arSp{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
 .ar-ch{width:100%;height:100%;display:block}
 /* ===== Hạt nhiễu (grain) phủ toàn trang cho cảm giác vật liệu thật, giống bản tham khảo ===== */
 body::after{content:"";position:fixed;inset:0;z-index:950;pointer-events:none;opacity:.05;
@@ -181,6 +189,16 @@ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' wid
 .rv{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
 .rv.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){.gt{animation:none}.rv{opacity:1;transform:none;transition:none}}
+/* ===== Banner riêng cho từng sản phẩm — màu + icon đổi theo loại, trôi nhẹ liên tục =====
+   (logo trong ảnh mẫu chỉ là ý tưởng; ở đây chọn icon theo tag/tên sản phẩm, không dùng ảnh ngoài
+   để khỏi phụ thuộc link có thể chết — vẽ bằng SVG cho nhẹ và luôn hiển thị đúng). */
+.pbanner{position:relative;margin:-22px -22px 14px;height:84px;overflow:hidden;background-size:200% 200%;animation:pbdrift 9s ease-in-out infinite alternate}
+@keyframes pbdrift{to{background-position:100% 60%}}
+.pbanner svg{position:absolute;right:-8px;bottom:-12px;width:94px;height:94px;opacity:.25;stroke:#fff;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.pb-0{background-image:linear-gradient(125deg,#3b2a05,#8a6a1d 45%,#d4af37 75%,#3b2a05)}
+.pb-1{background-image:linear-gradient(125deg,#3a0f1c,#7a2340 45%,#d1527c 75%,#3a0f1c)}
+.pb-2{background-image:linear-gradient(125deg,#0b2b2c,#1c6e6a 45%,#4fd1c5 75%,#0b2b2c)}
+.pb-3{background-image:linear-gradient(125deg,#1c1230,#4a2f7a 45%,#9b7bd4 75%,#1c1230)}
 </style>
 </head>
 <body>
@@ -344,7 +362,7 @@ function errMsg(e){const m=((e&&e.message)||'').toLowerCase();
 /* Email ảo dài hơn 6 ký tự (một số bộ kiểm tra từ chối phần tên quá ngắn kiểu admin@gmail.com) */
 const toEmail=u=>u+'.dg@'+EMAIL_DOMAIN,oldEmail=u=>u+'@'+EMAIL_DOMAIN;
 function openAuth(tab){state.authTab=tab||'login';renderAuthForm();$('#authOv').classList.add('open')}
-function closeAuth(){$('#authOv').classList.remove('open')}
+function closeAuth(){if(arRaf){cancelAnimationFrame(arRaf);arRaf=null}$('#authOv').classList.remove('open')}
 function switchAuthTab(x){state.authTab=x;renderAuthForm()}
 /* ===== Rig: tính góc khớp mỗi khung hình rồi set thẳng transform của từng <g> trong SVG =====
    Dùng thuộc tính transform của SVG (không phải CSS transform) nên tâm xoay luôn đúng gốc cục bộ
@@ -370,30 +388,56 @@ function arWalk(ph){const s=Math.sin(ph*2*Math.PI);return{...AR_STAND,
   thN:56*s,shN:46*Math.max(0,-Math.cos(ph*2*Math.PI))+6,thF:-56*s,shF:46*Math.max(0,Math.cos(ph*2*Math.PI))+6,
   aN:4-10*s,fN:-10,aF:5+10*s,fF:-12,torso:3,by:-3*Math.abs(Math.cos(ph*2*Math.PI))};}
 const AR_PARTS=['legF','shinF','legN','shinN','torso','head','armF','foreF','armN','foreN','caseHand'];
-function arApply(stageEl,P,x,floorOp,caseOp){
+function arApply(stageEl,P,x,floorOp,caseOp,lid,glow){
   const T=arXf(P);
   for(const p of AR_PARTS){const n=stageEl.querySelector('#'+p);if(n)n.setAttribute('transform',T[p])}
   stageEl.style.transform=`translateX(${x}px)`;
   const fc=stageEl.querySelector('#floorCase');if(fc)fc.style.opacity=floorOp;
   const ch=stageEl.querySelector('#caseHand');if(ch)ch.style.opacity=caseOp;
+  const ld=stageEl.querySelector('#fcLid');if(ld)ld.setAttribute('transform',`rotate(${-lid} -17 11.5)`);
+  const gl=stageEl.querySelector('#fcGlow');if(gl)gl.setAttribute('opacity',glow);
 }
 let arRaf=null;
+/* Tia sáng + vòng sóng + tia lửa bắn lên từ miệng cặp lúc nắp bật mở */
+function arBurst(stageEl,k){
+  const b=document.createElement('div');b.className='ar-burst';
+  b.style.left=((49+70)*k)+'px';b.style.top=((84+125)*k)+'px';
+  let h='<u></u>';
+  for(let i=0;i<16;i++){const a=Math.PI*(1.08+Math.random()*.84),d=34+Math.random()*52;
+    h+=`<i style="--dx:${(Math.cos(a)*d).toFixed(1)}px;--dy:${(Math.sin(a)*d).toFixed(1)}px;animation-delay:${(Math.random()*.1).toFixed(2)}s"></i>`}
+  b.innerHTML=h;stageEl.appendChild(b);setTimeout(()=>b.remove(),1100);
+}
 function startWalkIn(){
-  const stageEl=$('#arStage');if(!stageEl)return;
+  const stageEl=$('#arStage'),form=$('#arForm');if(!stageEl)return;
   if(arRaf)cancelAnimationFrame(arRaf);
-  const WALK=.95,DOWN=.55,PLACE=.25,UP=.45,LEAN=.5,TOTAL=WALK+DOWN+PLACE+UP+LEAN;
+  const k=stageEl.getBoundingClientRect().width/140;       /* px trên mỗi đơn vị SVG */
+  const sh=stageEl.getBoundingClientRect().height,caseY=(84+125)*k;
+  if(form)form.style.transformOrigin=`${form.offsetWidth/2+49*k}px ${-(sh-caseY+4)}px`;   /* form bung ra đúng từ miệng cặp */
+  const WALK=.95,DOWN=.55,PLACE=.25,OPEN=.5,UP=.45,LEAN=.5,
+        T1=WALK,T2=T1+DOWN,T3=T2+PLACE,T4=T3+OPEN,T5=T4+UP,TOTAL=T5+LEAN,LID=112;
   const easeIO=u=>u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2,easeOut=u=>1-Math.pow(1-u,3);
+  const back=u=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(u-1,3)+c1*Math.pow(u-1,2)};  /* nắp bật lên, nảy nhẹ */
+  const showForm=()=>{if(form&&form.classList.contains('pre')){form.classList.remove('pre');
+    if(matchMedia('(hover:hover)').matches)setTimeout(()=>{const u=$('#aU');if(u)u.focus()},650)}};
+  let burst=false;
+  const finish=()=>{arApply(stageEl,AR_LEAN,0,1,0,LID,.35);showForm()};
+  /* chạm vào popup khi đang chạy = bỏ qua hoạt cảnh, hiện form ngay */
+  $('#authBox').onpointerdown=()=>{if(arRaf){cancelAnimationFrame(arRaf);arRaf=null;finish()}};
+  setTimeout(showForm,5200);                                /* lưới an toàn: không bao giờ để form bị ẩn mãi */
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches)return finish();
   const t0=performance.now();
   (function frame(now){
     const t=Math.min(TOTAL,(now-t0)/1000);
-    let P,x=0,fo=0,co=1;
-    if(t<=WALK){const u=t/WALK;P=arWalk((easeOut(u)*2.6)%1);x=arLerp(-96,0,easeOut(u));if(u>.92)P=arMix(P,AR_STAND,(u-.92)/.08)}
-    else if(t<=WALK+DOWN){P=arMix(AR_STAND,AR_CROUCH,easeIO((t-WALK)/DOWN))}
-    else if(t<=WALK+DOWN+PLACE){P=AR_CROUCH;const e=easeIO((t-WALK-DOWN)/PLACE);co=1-e;fo=e}
-    else if(t<=WALK+DOWN+PLACE+UP){P=arMix(AR_CROUCH,AR_WAVE,easeIO((t-WALK-DOWN-PLACE)/UP));co=0;fo=1}
-    else{P=arMix(AR_WAVE,AR_LEAN,easeIO(Math.min(1,(t-WALK-DOWN-PLACE-UP)/LEAN)));co=0;fo=1}
-    arApply(stageEl,P,x,fo,co);
-    if(t<TOTAL)arRaf=requestAnimationFrame(frame);
+    let P,x=0,fo=0,co=1,lid=0,glow=0;
+    if(t<=T1){const u=t/WALK;P=arWalk((easeOut(u)*2.6)%1);x=arLerp(-96,0,easeOut(u));if(u>.92)P=arMix(P,AR_STAND,(u-.92)/.08)}
+    else if(t<=T2){P=arMix(AR_STAND,AR_CROUCH,easeIO((t-T1)/DOWN))}
+    else if(t<=T3){P=AR_CROUCH;const e=easeIO((t-T2)/PLACE);co=1-e;fo=e}
+    else if(t<=T4){P=AR_CROUCH;co=0;fo=1;const u=(t-T3)/OPEN;lid=LID*back(Math.min(1,u));glow=Math.min(1,u*2);
+      if(u>=.3&&!burst){burst=true;arBurst(stageEl,k)} if(u>=.45)showForm()}
+    else if(t<=T5){P=arMix(AR_CROUCH,AR_WAVE,easeIO((t-T4)/UP));co=0;fo=1;lid=LID;glow=1-.65*easeIO((t-T4)/UP)}
+    else{P=arMix(AR_WAVE,AR_LEAN,easeIO(Math.min(1,(t-T5)/LEAN)));co=0;fo=1;lid=LID;glow=.35}
+    arApply(stageEl,P,x,fo,co,lid,glow);
+    if(t<TOTAL)arRaf=requestAnimationFrame(frame);else arRaf=null;
   })(performance.now());
 }
 /* ===== Thẻ nghiêng 3D theo con trỏ — chỉ máy có chuột thật (không chạy trên cảm ứng) ===== */
@@ -413,20 +457,22 @@ if(matchMedia('(hover:hover) and (pointer:fine)').matches){
 const rvIO=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');rvIO.unobserve(e.target)}}),{threshold:.15});
 function armReveals(){document.querySelectorAll('.rv:not(.in)').forEach(el=>rvIO.observe(el))}
 function renderAuthForm(){
+  if(arRaf){cancelAnimationFrame(arRaf);arRaf=null}
   const r=state.authTab==='register';
   const stage=r
-    ?`<div class="ar-wrap"><div class="ar-stage" id="arStage"><svg class="ar-ch" viewBox="-70 -125 140 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="0" cy="101" rx="34" ry="5" fill="rgba(8,18,90,.3)"/><g id="floorCase" opacity="0" transform="translate(49 69)"><g id="fcInner"> <path d="M-7 4Q-7-3 0-3Q7-3 7 4" fill="none" stroke="#4f2814" stroke-width="2.6"/> <rect x="-17" y="3" width="34" height="24" rx="3" fill="#8d4b2c"/><rect x="-17" y="12" width="34" height="2.2" fill="#6e3a21"/><rect x="-2.6" y="9.5" width="5.2" height="6" rx="1.2" fill="#e2b24c"/></g></g><g id="armF"><rect x="-5.5" y="-4" width="11" height="36" rx="5.5" fill="#a29b90"/> <g id="foreF"><rect x="-5" y="-3" width="10" height="32" rx="5" fill="#a29b90"/><rect x="-4.6" y="23" width="9.2" height="4" fill="#dcdcdc"/><circle cx="0" cy="31" r="5.2" fill="#e4b48c"/></g></g><g id="legF"><rect x="-8" y="-5" width="16" height="54" rx="8" fill="#231c1f"/> <g id="shinF"><rect x="-7" y="-4" width="14" height="48" rx="7" fill="#231c1f"/>  <path d="M-8 38L4 38Q14 40 20 47L21 51L21 54L-8 54Z" fill="#e3e6ea"/><rect x="-8" y="51" width="29" height="3" rx="1.2" fill="#b9bfc8"/></g></g><g id="torso"> <path d="M-11 6Q-15-20-12-50Q-9-61 1-62Q12-61 13-50Q17-24 12 6Q0 10-11 6Z" fill="#bdb6ab"/> <path d="M13-50Q17-24 12 6L8 6Q12-22 9-50Z" fill="#f4f4f4"/><path d="M9-50Q12-22 8 6" stroke="#9a9388" stroke-width="1" fill="none"/><circle cx="5" cy="-6" r="1.3" fill="#8f887c"/> <g id="head"><rect x="-5" y="-4" width="9" height="9" rx="3" fill="#f2c9a5"/>  <ellipse cx="-2" cy="-15" rx="3.2" ry="4.2" fill="#e4b48c"/><ellipse cx="5" cy="-16" rx="13" ry="14.5" fill="#f2c9a5"/>  <path d="M-8-16Q-10-33 6-33Q20-32 19-20Q14-26 9-26Q2-24-1-17Q-3-13-8-16Z" fill="#e7b84f"/><path d="M9-31Q19-31 19-21Q15-27 9-27Z" fill="#d19c33"/>  <path d="M-1-10Q2 1 12 1Q19-1 18-9Q15-4 10-4Q4-4-1-10Z" fill="#dba945"/>  <circle cx="13" cy="-17" r="1.7" fill="#2b2220"/><path d="M10-21L16-21" stroke="#a77b2a" stroke-width="1.4" stroke-linecap="round"/>  <path d="M18-17L22-12L18-11Z" fill="#eebd97"/><path d="M13-7Q16-5 19-7" stroke="#8d4a3a" stroke-width="1.2" fill="none" stroke-linecap="round"/></g></g><g id="legN"><rect x="-8" y="-5" width="16" height="54" rx="8" fill="#2d2528"/> <g id="shinN"><rect x="-7" y="-4" width="14" height="48" rx="7" fill="#2d2528"/>  <path d="M-8 38L4 38Q14 40 20 47L21 51L21 54L-8 54Z" fill="#f5f6f8"/><rect x="-8" y="51" width="29" height="3" rx="1.2" fill="#c9ced6"/></g></g><g id="armN"><rect x="-5.5" y="-4" width="11" height="36" rx="5.5" fill="#bdb6ab"/> <g id="foreN"><rect x="-5" y="-3" width="10" height="32" rx="5" fill="#bdb6ab"/><rect x="-4.6" y="23" width="9.2" height="4" fill="#f4f4f4"/>  <g transform="translate(0 31)"><g id="caseHand">   <path d="M-7 4Q-7-3 0-3Q7-3 7 4" fill="none" stroke="#4f2814" stroke-width="2.6"/>   <rect x="-17" y="3" width="34" height="24" rx="3" fill="#8d4b2c"/><rect x="-17" y="12" width="34" height="2.2" fill="#6e3a21"/><rect x="-2.6" y="9.5" width="5.2" height="6" rx="1.2" fill="#e2b24c"/></g>   <circle cx="0" cy="0" r="5.2" fill="#f2c9a5"/></g></g></g></svg></div></div>`
+    ?`<div class="ar-wrap"><div class="ar-stage" id="arStage"><svg class="ar-ch" viewBox="-70 -125 140 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="0" cy="101" rx="34" ry="5" fill="rgba(8,18,90,.3)"/><g id="floorCase" opacity="0" transform="translate(49 73)"><rect x="-17" y="11" width="34" height="16" rx="3" fill="#8d4b2c"/><rect x="-17" y="19" width="34" height="2.2" fill="#6e3a21"/><ellipse id="fcGlow" cx="0" cy="11" rx="15" ry="3.4" fill="#fff3b0" opacity="0"/><g id="fcLid"><rect x="-17" y="3" width="34" height="9" rx="3" fill="#a05a36"/><path d="M-7 4Q-7-3 0-3Q7-3 7 4" fill="none" stroke="#4f2814" stroke-width="2.6"/><rect x="-2.6" y="6" width="5.2" height="6" rx="1.2" fill="#e2b24c"/></g></g><g id="armF"><rect x="-5.5" y="-4" width="11" height="36" rx="5.5" fill="#a29b90"/> <g id="foreF"><rect x="-5" y="-3" width="10" height="32" rx="5" fill="#a29b90"/><rect x="-4.6" y="23" width="9.2" height="4" fill="#dcdcdc"/><circle cx="0" cy="31" r="5.2" fill="#e4b48c"/></g></g><g id="legF"><rect x="-8" y="-5" width="16" height="54" rx="8" fill="#231c1f"/> <g id="shinF"><rect x="-7" y="-4" width="14" height="48" rx="7" fill="#231c1f"/>  <path d="M-8 38L4 38Q14 40 20 47L21 51L21 54L-8 54Z" fill="#e3e6ea"/><rect x="-8" y="51" width="29" height="3" rx="1.2" fill="#b9bfc8"/></g></g><g id="torso"> <path d="M-11 6Q-15-20-12-50Q-9-61 1-62Q12-61 13-50Q17-24 12 6Q0 10-11 6Z" fill="#bdb6ab"/> <path d="M13-50Q17-24 12 6L8 6Q12-22 9-50Z" fill="#f4f4f4"/><path d="M9-50Q12-22 8 6" stroke="#9a9388" stroke-width="1" fill="none"/><circle cx="5" cy="-6" r="1.3" fill="#8f887c"/> <g id="head"><rect x="-5" y="-4" width="9" height="9" rx="3" fill="#f2c9a5"/>  <ellipse cx="-2" cy="-15" rx="3.2" ry="4.2" fill="#e4b48c"/><ellipse cx="5" cy="-16" rx="13" ry="14.5" fill="#f2c9a5"/>  <path d="M-8-16Q-10-33 6-33Q20-32 19-20Q14-26 9-26Q2-24-1-17Q-3-13-8-16Z" fill="#e7b84f"/><path d="M9-31Q19-31 19-21Q15-27 9-27Z" fill="#d19c33"/>  <path d="M-1-10Q2 1 12 1Q19-1 18-9Q15-4 10-4Q4-4-1-10Z" fill="#dba945"/>  <circle cx="13" cy="-17" r="1.7" fill="#2b2220"/><path d="M10-21L16-21" stroke="#a77b2a" stroke-width="1.4" stroke-linecap="round"/>  <path d="M18-17L22-12L18-11Z" fill="#eebd97"/><path d="M13-7Q16-5 19-7" stroke="#8d4a3a" stroke-width="1.2" fill="none" stroke-linecap="round"/></g></g><g id="legN"><rect x="-8" y="-5" width="16" height="54" rx="8" fill="#2d2528"/> <g id="shinN"><rect x="-7" y="-4" width="14" height="48" rx="7" fill="#2d2528"/>  <path d="M-8 38L4 38Q14 40 20 47L21 51L21 54L-8 54Z" fill="#f5f6f8"/><rect x="-8" y="51" width="29" height="3" rx="1.2" fill="#c9ced6"/></g></g><g id="armN"><rect x="-5.5" y="-4" width="11" height="36" rx="5.5" fill="#bdb6ab"/> <g id="foreN"><rect x="-5" y="-3" width="10" height="32" rx="5" fill="#bdb6ab"/><rect x="-4.6" y="23" width="9.2" height="4" fill="#f4f4f4"/>  <g transform="translate(0 31)"><g id="caseHand">   <path d="M-7 4Q-7-3 0-3Q7-3 7 4" fill="none" stroke="#4f2814" stroke-width="2.6"/>   <rect x="-17" y="3" width="34" height="24" rx="3" fill="#8d4b2c"/><rect x="-17" y="12" width="34" height="2.2" fill="#6e3a21"/><rect x="-2.6" y="9.5" width="5.2" height="6" rx="1.2" fill="#e2b24c"/></g>   <circle cx="0" cy="0" r="5.2" fill="#f2c9a5"/></g></g></g></svg></div></div>`
     :`<div class="aspot"><div class="abeam"></div><div class="amascot"><span class="aeye l"></span><span class="aeye r"></span></div></div><h3 class="awelcome">${t('welcomeBack')}<span class="adot">.</span></h3>`;
-  $('#authBox').innerHTML=`${stage}<div class="tabs"><button class="${r?'':'on'}" onclick="switchAuthTab('login')">${t('login')}</button><button class="${r?'on':''}" onclick="switchAuthTab('register')">${t('register')}</button></div>
+  const body=`<div class="tabs"><button class="${r?'':'on'}" onclick="switchAuthTab('login')">${t('login')}</button><button class="${r?'on':''}" onclick="switchAuthTab('register')">${t('register')}</button></div>
   <label>${t('user')}</label><input id="aU" autocomplete="username">
   <label>${t('pass')}</label><input id="aP" type="password" autocomplete="${r?'new-password':'current-password'}">
   ${r?`<label>${t('conf')}</label><input id="aC" type="password" autocomplete="new-password">
   <label>${t('refCode')}</label><input id="aRef" placeholder="DG-XXXXXX" value="${esc(state.pendingRef||'')}">`:''}
   <button class="btn btn-primary mag" id="aGo">${r?t('register'):t('login')}</button>`;
+  $('#authBox').innerHTML=stage+(r?`<div class="ar-form pre" id="arForm">${body}</div>`:body);
   $('#aGo').onclick=r?doRegister:doLogin;
   $('#authBox').onkeydown=e=>{if(e.key==='Enter')$('#aGo').click()};
   if(r)startWalkIn();
-  setTimeout(()=>$('#aU').focus(),50);
+  else setTimeout(()=>$('#aU').focus(),50);
 }
 
 /* Tải hồ sơ + đơn của tôi từ server. Trả false nếu chưa đăng nhập hoặc bị khoá */
@@ -519,8 +565,26 @@ function renderTopBuyers(){
   ${arr.length?arr.map((x,i)=>`<tr><td>#${i+1}</td><td>${esc(x.username)}</td><td class="gold">${fmt(x.total)}</td></tr>`).join(''):`<tr><td colspan="3" class="mut">${t('none')}</td></tr>`}</table></div></div>`;
   $('#topBuyers').innerHTML=col(state.top.week,t('tabWeek'))+col(state.top.month,t('tabMonth'));
 }
+/* Chọn icon theo tên/tag sản phẩm, màu banner xoay vòng 4 kiểu cho đỡ trùng nhau */
+const PB_ICON={
+ heart:'<path d="M32 54 10 32a13 13 0 0 1 19-18l3 3 3-3a13 13 0 0 1 19 18z"/>',
+ bot:'<path d="M6 30 56 8 42 56 26 38 14 44z"/><path d="M26 38 48 16"/>',
+ cart:'<path d="M8 10h8l6 32h26l6-22H20"/><circle cx="24" cy="50" r="4"/><circle cx="42" cy="50" r="4"/>',
+ card:'<rect x="6" y="16" width="52" height="34" rx="6"/><path d="M6 26h52"/>',
+ frame:'<circle cx="32" cy="32" r="22"/><circle cx="24" cy="24" r="3" fill="#fff" stroke="none"/><circle cx="40" cy="22" r="3" fill="#fff" stroke="none"/><circle cx="44" cy="36" r="3" fill="#fff" stroke="none"/>',
+ code:'<path d="M20 14 6 32l14 18M44 14l14 18-14 18"/>'};
+function bannerHTML(l,i){
+  const s=(l.title+' '+(l.tags||[]).join(' ')).toLowerCase();
+  let icon='code';
+  if(/heart|love|tim/.test(s))icon='heart';
+  else if(/bot|telegraf|node/.test(s))icon='bot';
+  else if(/ecommerce|cart|shop|stripe/.test(s))icon='cart';
+  else if(/bank|flutter|figma|mobile/.test(s))icon='card';
+  else if(/portfolio|three|design/.test(s))icon='frame';
+  return `<div class="pbanner pb-${i%4}"><svg viewBox="0 0 64 64" aria-hidden="true">${PB_ICON[icon]}</svg></div>`;
+}
 function renderMarket(){
-  $('#grid').innerHTML=state.listings.map(l=>`<div class="card hov"><h3>${esc(l.title)}</h3><p class="mut">${esc(l['desc_'+state.lang]||'')}</p>
+  $('#grid').innerHTML=state.listings.map((l,i)=>`<div class="card hov rv">${bannerHTML(l,i)}<h3>${esc(l.title)}</h3><p class="mut">${esc(l['desc_'+state.lang]||'')}</p>
   <div class="tags">${(l.tags||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div>
   <div class="row"><b class="gold">${fmt(l.price)}</b><button class="btn btn-primary btn-sm mag" onclick="buyListing(${l.id})">${t('buy')}</button></div></div>`).join('');
 }
