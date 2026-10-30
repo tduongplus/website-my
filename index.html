@@ -114,6 +114,73 @@ select{width:100%;background:var(--bg2);border:1px solid var(--border);border-ra
 .atab.on{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#000;border-color:transparent}
 .atab .cnt{background:var(--danger);color:#fff;border-radius:99px;font-size:11px;padding:0 7px;line-height:18px}
 .atab.on .cnt{background:#000;color:var(--gold2)}
+/* ===== Viền RGB 7 màu chạy quanh các khối hộp (.card, .modal, .drawer, .rgb-border) =====
+   Kỹ thuật: 2 lớp background (màu nền thật + conic-gradient) cắt bằng background-clip,
+   không cần thêm thẻ bọc, không đụng tới markup hiện có. Góc xoay animate qua @property.
+   Lưu ý hiệu năng: đây là animation PHẢI vẽ lại (repaint) mỗi khung hình vì màu đổi theo góc,
+   khác hẳn transform/opacity (chỉ composite) — nên viền để mỏng, tốc độ vừa phải, và tự tắt
+   khi hệ điều hành bật "giảm chuyển động" (prefers-reduced-motion). */
+@property --rbg-a{syntax:'<angle>';inherits:true;initial-value:0deg}
+.card,.modal,.rgb-border{
+  --rbg-c:var(--glass);--rbg-w:2px;--rbg-dur:5.5s;
+  border:var(--rbg-w) solid transparent;
+  background-image:linear-gradient(var(--rbg-c),var(--rbg-c)),
+    conic-gradient(from var(--rbg-a),#FF1744,#FF9100,#FFEA00,#00E676,#00E5FF,#2979FF,#D500F9,#FF1744);
+  background-origin:border-box;background-clip:padding-box,border-box;
+  box-shadow:0 0 16px -5px rgba(0,229,255,.3),0 0 16px -5px rgba(213,0,249,.3);
+  animation:rbgspin var(--rbg-dur) linear infinite;
+}
+@keyframes rbgspin{to{--rbg-a:360deg}}
+.modal{--rbg-c:var(--bg2)}
+.rgb-border--premium{--rbg-w:2.5px;--rbg-dur:4.2s;box-shadow:0 0 22px -4px rgba(0,229,255,.45),0 0 22px -4px rgba(213,0,249,.45)}
+.rgb-border--subtle{--rbg-w:1px;--rbg-dur:7.5s;box-shadow:0 0 10px -5px rgba(0,229,255,.2),0 0 10px -5px rgba(213,0,249,.2)}
+.drawer{--rbg-c:var(--bg2)}
+/* .hov:hover vốn ghi đè border-color/box-shadow — trả lại viền trong suốt + tăng sáng viền RGB thay vì thay hẳn */
+.card.hov:hover,.modal.hov:hover,.rgb-border.hov:hover{
+  border-color:transparent;
+  box-shadow:0 0 24px -2px rgba(0,229,255,.55),0 0 24px -2px rgba(213,0,249,.55),var(--shadow);
+}
+.card:active,.modal:active,.rgb-border:active{box-shadow:0 0 26px -2px rgba(0,229,255,.6),0 0 26px -2px rgba(213,0,249,.6)}
+@media(prefers-reduced-motion:reduce){.card,.modal,.rgb-border{animation:none;--rbg-a:0deg}}
+/* ===== Hộp màu có hiệu ứng "lóe sáng" chạy trái→phải (dùng transform, mượt thật 60fps) ===== */
+.gbox{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--gold2),var(--gold));border-radius:14px;padding:12px 16px;color:#000;display:block;width:100%;border:0;cursor:pointer;font:inherit;text-align:left}
+.gbox b{font-size:19px;font-family:"Playfair Display",Georgia,serif}
+.gbox span{display:block;font-size:12px;opacity:.75;margin-bottom:2px}
+.shine::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.65) 50%,transparent 70%);transform:translateX(-120%) skewX(-20deg);animation:shine 2.6s ease-in-out infinite;will-change:transform;pointer-events:none}
+@keyframes shine{to{transform:translateX(120%) skewX(-20deg)}}
+/* Áp hiệu ứng lóe sáng cho mọi .card — riêng .modal/.drawer KHÔNG thêm overflow:hidden
+   vì drawer cần cuộn được khi danh sách menu dài hơn màn hình */
+.card{position:relative;overflow:hidden}
+.card::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.22) 50%,transparent 70%);transform:translateX(-120%) skewX(-20deg);animation:shine 3.4s ease-in-out infinite;will-change:transform;pointer-events:none}
+/* ===== Khối chào mừng khi Đăng nhập: đèn sân khấu + linh vật vàng =====
+   Đơn giản hoá từ video tham khảo: không dùng ảnh/sprite có sẵn, vẽ bằng CSS
+   hình tròn + clip-path để khớp đúng tông vàng-đen, không dùng màu xanh gốc. */
+.aspot{position:relative;height:116px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:4px}
+.abeam{position:absolute;top:0;width:150px;height:108px;background:linear-gradient(180deg,rgba(212,175,55,.4),rgba(212,175,55,0) 85%);clip-path:polygon(47% 0,53% 0,96% 100%,4% 100%);animation:beamIn .6s ease both,beamPulse 2.6s ease-in-out .6s infinite}
+@keyframes beamIn{from{opacity:0;transform:scaleY(.6)}to{opacity:1;transform:scaleY(1)}}
+@keyframes beamPulse{0%,100%{opacity:.85}50%{opacity:1}}
+.amascot{width:56px;height:56px;border-radius:50% 50% 46% 46%/58% 58% 42% 42%;background:linear-gradient(160deg,var(--gold2),var(--gold));position:relative;box-shadow:0 0 26px rgba(212,175,55,.55);animation:mascotIn .55s .35s cubic-bezier(.34,1.56,.64,1) both,mascotBob 2.4s ease-in-out 1s infinite}
+@keyframes mascotIn{from{opacity:0;transform:translateY(14px) scale(.5)}to{opacity:1;transform:none}}
+@keyframes mascotBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.amascot .aeye{position:absolute;top:21px;width:5px;height:7px;background:#1a1203;border-radius:50%}
+.amascot .aeye.l{left:16px}.amascot .aeye.r{right:16px}
+.awelcome{text-align:center;margin:0 0 14px;font-size:21px;opacity:0;animation:fadeUp .5s .78s both}
+.awelcome .adot{color:var(--gold)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* ===== Nhân vật doanh nhân đi vào khi mở tab Đăng ký — rig khớp nối, JS tính góc mỗi khung hình ===== */
+.ar-wrap{display:flex;justify-content:center;align-items:flex-end;height:150px;margin-bottom:4px;overflow:visible}
+.ar-stage{width:94px;height:154px;flex:none}
+.ar-ch{width:100%;height:100%;display:block}
+/* ===== Hạt nhiễu (grain) phủ toàn trang cho cảm giác vật liệu thật, giống bản tham khảo ===== */
+body::after{content:"";position:fixed;inset:0;z-index:950;pointer-events:none;opacity:.05;
+background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+/* Chữ gradient vàng chảy ngang */
+.gt{background:linear-gradient(90deg,var(--gold),var(--gold2),var(--gold));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:gtflow 6s linear infinite}
+@keyframes gtflow{to{background-position:200% 0}}
+/* Thẻ hiện dần khi cuộn tới (IntersectionObserver gắn class .in) */
+.rv{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.gt{animation:none}.rv{opacity:1;transform:none;transition:none}}
 </style>
 </head>
 <body>
@@ -131,7 +198,7 @@ select{width:100%;background:var(--bg2);border:1px solid var(--border);border-ra
 </header>
 
 <div class="overlay" id="ov"></div>
-<aside class="drawer" id="drawer">
+<aside class="drawer rgb-border rgb-border--subtle" id="drawer">
   <div class="ubox" id="drawerUser"></div>
   <nav id="nav"></nav>
   <div class="tools"><button class="icon-btn" id="langBtn2"></button><button class="icon-btn" id="themeBtn2"></button></div>
@@ -142,7 +209,7 @@ select{width:100%;background:var(--bg2);border:1px solid var(--border);border-ra
   <section class="view active" id="v-home">
     <div class="hero">
       <span class="gl"></span>
-      <h1 data-i18n="heroT"></h1>
+      <h1 data-i18n="heroT" class="gt"></h1>
       <p data-i18n="heroS"></p>
       <div class="btns">
         <button class="btn btn-primary mag" data-go="market" data-i18n="browse"></button>
@@ -153,9 +220,9 @@ select{width:100%;background:var(--bg2);border:1px solid var(--border);border-ra
     <div class="sec" id="topBuyersSec" style="display:none"><h2 data-i18n="topBuyersT"></h2><p data-i18n="topBuyersS"></p><div class="grid" id="topBuyers"></div></div>
     <div class="sec"><h2 data-i18n="featT"></h2><p data-i18n="featS"></p>
       <div class="grid">
-        <div class="card hov"><h3 data-i18n="f1t"></h3><p class="mut" data-i18n="f1d"></p></div>
-        <div class="card hov"><h3 data-i18n="f2t"></h3><p class="mut" data-i18n="f2d"></p></div>
-        <div class="card hov"><h3 data-i18n="f3t"></h3><p class="mut" data-i18n="f3d"></p></div>
+        <div class="card hov rv"><h3 data-i18n="f1t"></h3><p class="mut" data-i18n="f1d"></p></div>
+        <div class="card hov rv"><h3 data-i18n="f2t"></h3><p class="mut" data-i18n="f2d"></p></div>
+        <div class="card hov rv"><h3 data-i18n="f3t"></h3><p class="mut" data-i18n="f3d"></p></div>
       </div>
     </div>
   </section>
@@ -214,7 +281,7 @@ balance:'Số dư',dep:'Nạp tiền',wd:'Rút tiền',upQR:'Tải lên mã QR n
 history:'Lịch sử giao dịch',cType:'Loại',cAmount:'Số tiền',cNote:'Ghi chú',cStatus:'Trạng thái',cTime:'Thời gian',pending:'Chờ duyệt',approved:'Đã duyệt',rejected:'Từ chối',
 tdeposit:'💰 Nạp',twithdraw:'💸 Rút',tbuy:'🛒 Mua',aUsers:'Tổng người dùng',aActive:'Đang hoạt động',aBanned:'Bị khoá',aPend:'Chờ duyệt',
 aPendT:'Yêu cầu chờ duyệt',aUsersT:'Quản lý người dùng',aLogsT:'Nhật ký IP (30 gần nhất)',cUser:'Tài khoản',cRole:'Vai trò',cEvent:'Sự kiện',cAct:'Thao tác',cBal:'Số dư',ban:'Khoá',unban:'Mở khoá',none:'Chưa có dữ liệu',
-orders:'Lịch sử mua hàng',tabPending:'Chờ duyệt',tabTop:'Top người mua',tabOrders:'Đặt làm riêng',tabUsers:'Người dùng',tabLogs:'Nhật ký IP',search:'Tìm kiếm...',payPeriod:'Kỳ thưởng',ePaid:'Kỳ này đã ghi nhận trả thưởng cho người này rồi.',eNoUser:'Không tìm thấy người dùng này.',refCode:'Mã giới thiệu (nếu có)',myRef:'Mã giới thiệu của bạn',refShare:'Chia sẻ mã này: bạn được 10.000đ khi bạn bè mua đơn đầu tiên, họ được giảm 5.000đ.',
+orders:'Lịch sử mua hàng',welcomeBack:'Chào mừng trở lại',tabPending:'Chờ duyệt',tabTop:'Top người mua',tabOrders:'Đặt làm riêng',tabUsers:'Người dùng',tabLogs:'Nhật ký IP',search:'Tìm kiếm...',payPeriod:'Kỳ thưởng',ePaid:'Kỳ này đã ghi nhận trả thưởng cho người này rồi.',eNoUser:'Không tìm thấy người dùng này.',refCode:'Mã giới thiệu (nếu có)',myRef:'Mã giới thiệu của bạn',refShare:'Chia sẻ mã này: bạn được 10.000đ khi bạn bè mua đơn đầu tiên, họ được giảm 5.000đ.',
 topBuyersT:'🏆 Top người mua',topBuyersS:'Xếp hạng theo tổng tiền mua thật trong tuần/tháng này — không tính tiền nạp.',tabWeek:'Tuần này',tabMonth:'Tháng này',rank:'Hạng',totalBuy:'Tổng đã mua',
 aRewardsT:'Thưởng top người mua',suggest:'Gợi ý',payUser:'Tên đăng nhập người thắng',payAmt:'Số tiền đã chuyển (đ)',payNote:'Ghi chú (STK, nội dung CK...)',payGo:'Ghi nhận đã trả',okPay:'Đã lưu lịch sử trả thưởng.',
 customT:'Đặt làm theo yêu cầu',customS:'Mô tả sản phẩm bạn muốn, để lại email hoặc Zalo để admin liên hệ trao đổi, cải tiến.',customReqL:'Bạn muốn làm sản phẩm gì?',customContactL:'Email hoặc số Zalo để liên hệ',customGo:'Gửi yêu cầu',okOrder:'Đã gửi yêu cầu, admin sẽ liên hệ qua thông tin bạn để lại.',
@@ -232,7 +299,7 @@ balance:'Balance',dep:'Deposit',wd:'Withdraw',upQR:'Upload your receiving QR (op
 history:'Transaction history',cType:'Type',cAmount:'Amount',cNote:'Note',cStatus:'Status',cTime:'Time',pending:'Pending',approved:'Approved',rejected:'Rejected',
 tdeposit:'💰 Deposit',twithdraw:'💸 Withdraw',tbuy:'🛒 Purchase',aUsers:'Total users',aActive:'Active',aBanned:'Banned',aPend:'Pending',
 aPendT:'Pending requests',aUsersT:'User management',aLogsT:'IP logs (latest 30)',cUser:'User',cRole:'Role',cEvent:'Event',cAct:'Actions',cBal:'Balance',ban:'Ban',unban:'Unban',none:'No data yet',
-orders:'Purchase history',tabPending:'Pending',tabTop:'Top buyers',tabOrders:'Custom orders',tabUsers:'Users',tabLogs:'IP logs',search:'Search...',payPeriod:'Reward period',ePaid:'A payout was already recorded for this user this period.',eNoUser:'User not found.',refCode:'Referral code (optional)',myRef:'Your referral code',refShare:'Share this: you get 10,000đ when a friend completes their first purchase, they get 5,000đ off.',
+orders:'Purchase history',welcomeBack:'Welcome back',tabPending:'Pending',tabTop:'Top buyers',tabOrders:'Custom orders',tabUsers:'Users',tabLogs:'IP logs',search:'Search...',payPeriod:'Reward period',ePaid:'A payout was already recorded for this user this period.',eNoUser:'User not found.',refCode:'Referral code (optional)',myRef:'Your referral code',refShare:'Share this: you get 10,000đ when a friend completes their first purchase, they get 5,000đ off.',
 topBuyersT:'🏆 Top buyers',topBuyersS:'Ranked by real purchase total this week/month — deposits are not counted.',tabWeek:'This week',tabMonth:'This month',rank:'Rank',totalBuy:'Total bought',
 aRewardsT:'Top-buyer rewards',suggest:'Suggested',payUser:'Winner username',payAmt:'Amount sent (đ)',payNote:'Note (bank acct, transfer note...)',payGo:'Record payout',okPay:'Payout saved to history.',
 customT:'Custom Order',customS:'Describe the product you want, leave an email or Zalo number so admin can reach you to discuss and refine it.',customReqL:'What would you like built?',customContactL:'Email or Zalo number to reach you',customGo:'Send request',okOrder:'Request sent — admin will contact you using the info you left.',
@@ -279,9 +346,78 @@ const toEmail=u=>u+'.dg@'+EMAIL_DOMAIN,oldEmail=u=>u+'@'+EMAIL_DOMAIN;
 function openAuth(tab){state.authTab=tab||'login';renderAuthForm();$('#authOv').classList.add('open')}
 function closeAuth(){$('#authOv').classList.remove('open')}
 function switchAuthTab(x){state.authTab=x;renderAuthForm()}
+/* ===== Rig: tính góc khớp mỗi khung hình rồi set thẳng transform của từng <g> trong SVG =====
+   Dùng thuộc tính transform của SVG (không phải CSS transform) nên tâm xoay luôn đúng gốc cục bộ
+   của từng khớp, không bị lệch tâm như khi animate CSS transform trên <g> lồng nhau. */
+const arRot=(x,y,a)=>{const r=a*Math.PI/180;return[x*Math.cos(r)-y*Math.sin(r),x*Math.sin(r)+y*Math.cos(r)]};
+const arLerp=(a,b,t)=>a+(b-a)*t;
+const arMix=(A,B,t)=>{const o={};for(const k in A)o[k]=arLerp(A[k],B[k],t);return o};
+const AR_STAND={bx:0,by:0,torso:0,head:0,thN:0,shN:0,thF:0,shF:0,aN:3,fN:-6,aF:-3,fF:-6};
+const AR_CROUCH={bx:-46,by:44.4,torso:72,head:-52,thN:-88,shN:88,thF:-82,shF:82,aN:-118,fN:-1,aF:-100,fF:-10};
+const AR_WAVE={bx:0,by:0,torso:-2,head:2,thN:0,shN:0,thF:0,shF:0,aN:-150,fN:-10,aF:-3,fF:-6};
+const AR_LEAN={bx:0,by:0,torso:5,head:-6,thN:-4,shN:4,thF:8,shF:-6,aN:-38,fN:-128,aF:-2,fF:-8};
+function arXf(P){
+  const t=P.torso,[sx,sy]=arRot(-1,-54,t),S=[P.bx+sx,P.by+sy];
+  return{
+    legF:`translate(${P.bx} ${P.by}) rotate(${P.thF})`,shinF:`translate(0 46) rotate(${P.shF})`,
+    legN:`translate(${P.bx} ${P.by}) rotate(${P.thN})`,shinN:`translate(0 46) rotate(${P.shN})`,
+    torso:`translate(${P.bx} ${P.by}) rotate(${t})`,head:`translate(3 -62) rotate(${P.head})`,
+    armF:`translate(${S[0]} ${S[1]}) rotate(${t+P.aF})`,foreF:`translate(0 30) rotate(${P.fF})`,
+    armN:`translate(${S[0]} ${S[1]}) rotate(${t+P.aN})`,foreN:`translate(0 30) rotate(${P.fN})`,
+    caseHand:`rotate(${-(t+P.aN+P.fN)})`};
+}
+function arWalk(ph){const s=Math.sin(ph*2*Math.PI);return{...AR_STAND,
+  thN:56*s,shN:46*Math.max(0,-Math.cos(ph*2*Math.PI))+6,thF:-56*s,shF:46*Math.max(0,Math.cos(ph*2*Math.PI))+6,
+  aN:4-10*s,fN:-10,aF:5+10*s,fF:-12,torso:3,by:-3*Math.abs(Math.cos(ph*2*Math.PI))};}
+const AR_PARTS=['legF','shinF','legN','shinN','torso','head','armF','foreF','armN','foreN','caseHand'];
+function arApply(stageEl,P,x,floorOp,caseOp){
+  const T=arXf(P);
+  for(const p of AR_PARTS){const n=stageEl.querySelector('#'+p);if(n)n.setAttribute('transform',T[p])}
+  stageEl.style.transform=`translateX(${x}px)`;
+  const fc=stageEl.querySelector('#floorCase');if(fc)fc.style.opacity=floorOp;
+  const ch=stageEl.querySelector('#caseHand');if(ch)ch.style.opacity=caseOp;
+}
+let arRaf=null;
+function startWalkIn(){
+  const stageEl=$('#arStage');if(!stageEl)return;
+  if(arRaf)cancelAnimationFrame(arRaf);
+  const WALK=.95,DOWN=.55,PLACE=.25,UP=.45,LEAN=.5,TOTAL=WALK+DOWN+PLACE+UP+LEAN;
+  const easeIO=u=>u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2,easeOut=u=>1-Math.pow(1-u,3);
+  const t0=performance.now();
+  (function frame(now){
+    const t=Math.min(TOTAL,(now-t0)/1000);
+    let P,x=0,fo=0,co=1;
+    if(t<=WALK){const u=t/WALK;P=arWalk((easeOut(u)*2.6)%1);x=arLerp(-96,0,easeOut(u));if(u>.92)P=arMix(P,AR_STAND,(u-.92)/.08)}
+    else if(t<=WALK+DOWN){P=arMix(AR_STAND,AR_CROUCH,easeIO((t-WALK)/DOWN))}
+    else if(t<=WALK+DOWN+PLACE){P=AR_CROUCH;const e=easeIO((t-WALK-DOWN)/PLACE);co=1-e;fo=e}
+    else if(t<=WALK+DOWN+PLACE+UP){P=arMix(AR_CROUCH,AR_WAVE,easeIO((t-WALK-DOWN-PLACE)/UP));co=0;fo=1}
+    else{P=arMix(AR_WAVE,AR_LEAN,easeIO(Math.min(1,(t-WALK-DOWN-PLACE-UP)/LEAN)));co=0;fo=1}
+    arApply(stageEl,P,x,fo,co);
+    if(t<TOTAL)arRaf=requestAnimationFrame(frame);
+  })(performance.now());
+}
+/* ===== Thẻ nghiêng 3D theo con trỏ — chỉ máy có chuột thật (không chạy trên cảm ứng) ===== */
+if(matchMedia('(hover:hover) and (pointer:fine)').matches){
+  document.addEventListener('pointermove',e=>{
+    const c=e.target.closest('.card');if(!c)return;
+    const k=c.getBoundingClientRect();
+    c.style.transition='none';
+    c.style.transform=`perspective(900px) rotateY(${((e.clientX-k.left)/k.width-.5)*9}deg) rotateX(${-((e.clientY-k.top)/k.height-.5)*9}deg)`;
+  });
+  document.addEventListener('pointerout',e=>{
+    const c=e.target.closest('.card');if(!c||c.contains(e.relatedTarget))return;
+    c.style.transition='transform .5s cubic-bezier(.34,1.56,.64,1)';c.style.transform='';
+  });
+}
+/* ===== Hiện dần khi cuộn tới ===== */
+const rvIO=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');rvIO.unobserve(e.target)}}),{threshold:.15});
+function armReveals(){document.querySelectorAll('.rv:not(.in)').forEach(el=>rvIO.observe(el))}
 function renderAuthForm(){
   const r=state.authTab==='register';
-  $('#authBox').innerHTML=`<div class="tabs"><button class="${r?'':'on'}" onclick="switchAuthTab('login')">${t('login')}</button><button class="${r?'on':''}" onclick="switchAuthTab('register')">${t('register')}</button></div>
+  const stage=r
+    ?`<div class="ar-wrap"><div class="ar-stage" id="arStage"><svg class="ar-ch" viewBox="-70 -125 140 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="0" cy="101" rx="34" ry="5" fill="rgba(8,18,90,.3)"/><g id="floorCase" opacity="0" transform="translate(49 69)"><g id="fcInner"> <path d="M-7 4Q-7-3 0-3Q7-3 7 4" fill="none" stroke="#4f2814" stroke-width="2.6"/> <rect x="-17" y="3" width="34" height="24" rx="3" fill="#8d4b2c"/><rect x="-17" y="12" width="34" height="2.2" fill="#6e3a21"/><rect x="-2.6" y="9.5" width="5.2" height="6" rx="1.2" fill="#e2b24c"/></g></g><g id="armF"><rect x="-5.5" y="-4" width="11" height="36" rx="5.5" fill="#a29b90"/> <g id="foreF"><rect x="-5" y="-3" width="10" height="32" rx="5" fill="#a29b90"/><rect x="-4.6" y="23" width="9.2" height="4" fill="#dcdcdc"/><circle cx="0" cy="31" r="5.2" fill="#e4b48c"/></g></g><g id="legF"><rect x="-8" y="-5" width="16" height="54" rx="8" fill="#231c1f"/> <g id="shinF"><rect x="-7" y="-4" width="14" height="48" rx="7" fill="#231c1f"/>  <path d="M-8 38L4 38Q14 40 20 47L21 51L21 54L-8 54Z" fill="#e3e6ea"/><rect x="-8" y="51" width="29" height="3" rx="1.2" fill="#b9bfc8"/></g></g><g id="torso"> <path d="M-11 6Q-15-20-12-50Q-9-61 1-62Q12-61 13-50Q17-24 12 6Q0 10-11 6Z" fill="#bdb6ab"/> <path d="M13-50Q17-24 12 6L8 6Q12-22 9-50Z" fill="#f4f4f4"/><path d="M9-50Q12-22 8 6" stroke="#9a9388" stroke-width="1" fill="none"/><circle cx="5" cy="-6" r="1.3" fill="#8f887c"/> <g id="head"><rect x="-5" y="-4" width="9" height="9" rx="3" fill="#f2c9a5"/>  <ellipse cx="-2" cy="-15" rx="3.2" ry="4.2" fill="#e4b48c"/><ellipse cx="5" cy="-16" rx="13" ry="14.5" fill="#f2c9a5"/>  <path d="M-8-16Q-10-33 6-33Q20-32 19-20Q14-26 9-26Q2-24-1-17Q-3-13-8-16Z" fill="#e7b84f"/><path d="M9-31Q19-31 19-21Q15-27 9-27Z" fill="#d19c33"/>  <path d="M-1-10Q2 1 12 1Q19-1 18-9Q15-4 10-4Q4-4-1-10Z" fill="#dba945"/>  <circle cx="13" cy="-17" r="1.7" fill="#2b2220"/><path d="M10-21L16-21" stroke="#a77b2a" stroke-width="1.4" stroke-linecap="round"/>  <path d="M18-17L22-12L18-11Z" fill="#eebd97"/><path d="M13-7Q16-5 19-7" stroke="#8d4a3a" stroke-width="1.2" fill="none" stroke-linecap="round"/></g></g><g id="legN"><rect x="-8" y="-5" width="16" height="54" rx="8" fill="#2d2528"/> <g id="shinN"><rect x="-7" y="-4" width="14" height="48" rx="7" fill="#2d2528"/>  <path d="M-8 38L4 38Q14 40 20 47L21 51L21 54L-8 54Z" fill="#f5f6f8"/><rect x="-8" y="51" width="29" height="3" rx="1.2" fill="#c9ced6"/></g></g><g id="armN"><rect x="-5.5" y="-4" width="11" height="36" rx="5.5" fill="#bdb6ab"/> <g id="foreN"><rect x="-5" y="-3" width="10" height="32" rx="5" fill="#bdb6ab"/><rect x="-4.6" y="23" width="9.2" height="4" fill="#f4f4f4"/>  <g transform="translate(0 31)"><g id="caseHand">   <path d="M-7 4Q-7-3 0-3Q7-3 7 4" fill="none" stroke="#4f2814" stroke-width="2.6"/>   <rect x="-17" y="3" width="34" height="24" rx="3" fill="#8d4b2c"/><rect x="-17" y="12" width="34" height="2.2" fill="#6e3a21"/><rect x="-2.6" y="9.5" width="5.2" height="6" rx="1.2" fill="#e2b24c"/></g>   <circle cx="0" cy="0" r="5.2" fill="#f2c9a5"/></g></g></g></svg></div></div>`
+    :`<div class="aspot"><div class="abeam"></div><div class="amascot"><span class="aeye l"></span><span class="aeye r"></span></div></div><h3 class="awelcome">${t('welcomeBack')}<span class="adot">.</span></h3>`;
+  $('#authBox').innerHTML=`${stage}<div class="tabs"><button class="${r?'':'on'}" onclick="switchAuthTab('login')">${t('login')}</button><button class="${r?'on':''}" onclick="switchAuthTab('register')">${t('register')}</button></div>
   <label>${t('user')}</label><input id="aU" autocomplete="username">
   <label>${t('pass')}</label><input id="aP" type="password" autocomplete="${r?'new-password':'current-password'}">
   ${r?`<label>${t('conf')}</label><input id="aC" type="password" autocomplete="new-password">
@@ -289,6 +425,7 @@ function renderAuthForm(){
   <button class="btn btn-primary mag" id="aGo">${r?t('register'):t('login')}</button>`;
   $('#aGo').onclick=r?doRegister:doLogin;
   $('#authBox').onkeydown=e=>{if(e.key==='Enter')$('#aGo').click()};
+  if(r)startWalkIn();
   setTimeout(()=>$('#aU').focus(),50);
 }
 
@@ -360,14 +497,15 @@ function renderDrawerUser(){
   const u=state.user;
   $('#drawerUser').innerHTML=u?`<div class="av">${esc(u.username[0].toUpperCase())}</div><div><b>${esc(u.username)}</b><br><span class="role">${u.role}</span></div>`
     :`<div class="av">?</div><div><button class="btn btn-primary btn-sm" onclick="toggleDrawer(false);openAuth('login')">${t('login')}</button></div>`;
+  const bal=u?`<button class="gbox shine" style="margin-bottom:10px" data-go="wallet"><span>${t('balance')}</span><b>${fmt(u.balance)}</b></button>`:'';
   const items=[['home','home'],['market','market'],['wallet','wallet'],['orders','orders']];
   if(u&&u.role==='admin')items.push(['admin','admin']);
-  $('#nav').innerHTML=items.map(i=>`<button class="nav-i ${state.view===i[0]?'on':''}" data-go="${i[0]}">${t(i[1])}</button>`).join('')+(u?`<button class="nav-i" onclick="logout()">${t('logout')}</button>`:'');
+  $('#nav').innerHTML=bal+items.map(i=>`<button class="nav-i ${state.view===i[0]?'on':''}" data-go="${i[0]}">${t(i[1])}</button>`).join('')+(u?`<button class="nav-i" onclick="logout()">${t('logout')}</button>`:'');
 }
 function renderHome(){
   const u=state.user,c=[[state.listings.length,'sCodes']];
   if(u)c.push([fmt(u.balance),'balance'],[state.tx.filter(x=>x.type==='buy').length,'orders']);
-  $('#homeStats').innerHTML=c.map(a=>`<div class="card hov"><div class="num">${a[0]}</div><span class="mut">${t(a[1])}</span></div>`).join('');
+  $('#homeStats').innerHTML=c.map(a=>`<div class="card hov rgb-border--premium"><div class="num">${a[0]}</div><span class="mut">${t(a[1])}</span></div>`).join('');
 }
 /* Bảng xếp hạng người mua: hàm public, ai cũng gọi được kể cả chưa đăng nhập */
 async function loadTopBuyers(){
@@ -399,7 +537,7 @@ async function buyListing(id){
 const noteFor=()=>{if(!state.code)state.code=String(1000+Math.floor(Math.random()*9000));return 'NAP '+state.user.username.toUpperCase()+' '+state.code};
 function renderWallet(){
   const u=state.user;if(!u)return;
-  $('#wbody').innerHTML=`<div class="card" style="margin-top:20px"><span class="mut">${t('balance')}</span><div class="big">${fmt(u.balance)}</div></div>
+  $('#wbody').innerHTML=`<div class="card rgb-border--premium" style="margin-top:20px"><span class="mut">${t('balance')}</span><div class="big">${fmt(u.balance)}</div></div>
   <div class="card"><h3>${t('myRef')}</h3><div class="row" style="margin:0"><input readonly value="${esc(u.referral_code||'')}"><button class="btn btn-ghost btn-sm" onclick="copyRef()">${t('copy')}</button></div><p class="mut" style="margin-top:10px">${t('refShare')}</p></div>
   <div class="two">
    <div class="card"><h3>${t('dep')}</h3><p class="mut">${t('scanQR')}</p>
@@ -613,7 +751,7 @@ async function init(){
   ['#themeBtn','#themeBtn2'].forEach(s=>$(s).onclick=toggleTheme);['#langBtn','#langBtn2'].forEach(s=>$(s).onclick=toggleLang);
   $('#authOv').onclick=e=>{if(e.target.id==='authOv')closeAuth()};
   document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)switchView(g.dataset.go)});
-  renderAll();toast(t('welcome'));startMusic();
+  renderAll();toast(t('welcome'));startMusic();armReveals();
   if(!sb){setPct(100);hidePreload();return toast(t('eNet'),'error')}
   const l=await sb.from('listings').select('*').order('id');state.listings=l.data||[];setPct(40);
   await loadTopBuyers();setPct(70);
