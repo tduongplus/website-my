@@ -556,6 +556,7 @@ function renderHome(){
 /* Bảng xếp hạng người mua: hàm public, ai cũng gọi được kể cả chưa đăng nhập */
 async function loadTopBuyers(){
   const [w,m]=await Promise.all([sb.rpc('top_buyers',{p_period:'week'}),sb.rpc('top_buyers',{p_period:'month'})]);
+  if(w.error||m.error)toast('Lỗi tải top người mua: '+((w.error||m.error).message),'error');
   state.top={week:w.data||[],month:m.data||[]};
 }
 function renderTopBuyers(){
@@ -817,7 +818,10 @@ async function init(){
   document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)switchView(g.dataset.go)});
   renderAll();toast(t('welcome'));startMusic();armReveals();
   if(!sb){setPct(100);hidePreload();return toast(t('eNet'),'error')}
-  const l=await sb.from('listings').select('*').order('id');state.listings=l.data||[];setPct(40);
+  const l=await sb.from('listings').select('*').order('id');
+  if(l.error)toast('Lỗi tải sản phẩm: '+l.error.message,'error');
+  state.listings=l.data||[];if(!state.listings.length)toast('Chợ mã nguồn đang trống (0 sản phẩm).','error');
+  setPct(40);
   await loadTopBuyers();setPct(70);
   await loadMine();setPct(100);renderAll();hidePreload();
 }
